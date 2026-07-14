@@ -263,6 +263,31 @@ const diagAp = document.getElementById('diag-ap');
 const combatLog = document.getElementById('combat-log');
 const returnLobbyBtn = document.getElementById('return-lobby-btn');
 
+// Guide Modal elements
+const guideModal = document.getElementById('guide-modal');
+const guideOpenBtnLobby = document.getElementById('guide-open-btn-lobby');
+const guideOpenBtnGame = document.getElementById('guide-open-btn-game');
+const guideCloseBtn = document.getElementById('guide-close-btn');
+
+function openGuide() {
+  if (guideModal) guideModal.classList.remove('hidden');
+  playSound('select');
+}
+function closeGuide() {
+  if (guideModal) guideModal.classList.add('hidden');
+  playSound('select');
+}
+
+if (guideOpenBtnLobby) guideOpenBtnLobby.addEventListener('click', openGuide);
+if (guideOpenBtnGame) guideOpenBtnGame.addEventListener('click', openGuide);
+if (guideCloseBtn) guideCloseBtn.addEventListener('click', closeGuide);
+
+if (guideModal) {
+  guideModal.addEventListener('click', (e) => {
+    if (e.target === guideModal) closeGuide();
+  });
+}
+
 // ==========================================
 // USERNAME STEP LOGIC
 // ==========================================
@@ -771,7 +796,8 @@ function syncUnits(units) {
         gridZ: unit.z
       };
       // Center unit position
-      mesh.position.set(unit.x - 5.5, 0.25, unit.z - 5.5);
+      // Center unit position (set to y = 0 to place on grid)
+      mesh.position.set(unit.x - 5.5, 0.0, unit.z - 5.5);
 
       // Save references to original materials to restore after hits/flashes
       mesh.traverse(child => {
@@ -792,7 +818,7 @@ function syncUnits(units) {
     } else {
       // Sync coordinates if not currently in a movement animation
       if (!mesh.userData.moveAnim) {
-        mesh.position.set(unit.x - 5.5, 0.25, unit.z - 5.5);
+        mesh.position.set(unit.x - 5.5, 0.0, unit.z - 5.5);
         mesh.userData.gridX = unit.x;
         mesh.userData.gridZ = unit.z;
       }
@@ -1276,8 +1302,8 @@ function createVoxelUnit(type, team) {
     orbGlow.position.set(0.28, 0.92, 0.08); group.add(orbGlow);
   }
 
-  // Set unit standing on the grid
-  group.position.y = 0.25;
+  // Set unit standing on the grid (y = 0 so they align perfectly on ground)
+  group.position.y = 0.0;
 
   return group;
 }
@@ -1615,9 +1641,6 @@ function updateDiagnosticPanel(unit) {
   unitDiagnostic.classList.remove('hidden');
 }
 
-// ==========================================
-// ANIMATION LOOP
-// ==========================================
 function animate() {
   requestAnimationFrame(animate);
 
@@ -1627,14 +1650,17 @@ function animate() {
   for (const id in unitMeshes) {
     const mesh = unitMeshes[id];
 
-    // Handle Movement Lerping
+    // Handle Movement Lerping with professional bobbing, tilt & lean
     if (mesh.userData.moveAnim) {
       const anim = mesh.userData.moveAnim;
       anim.elapsed += dt;
       const progress = Math.min(1.0, anim.elapsed / anim.time);
       
-      // Bobbing height calculation
-      const bob = Math.abs(Math.sin(progress * Math.PI * 3.0)) * 0.22;
+      // Professional jumping curve (3 bounces during movement)
+      const bob = Math.abs(Math.sin(progress * Math.PI * 3.5)) * 0.35;
+      
+      // Rotational sway (waddle effect)
+      const roll = Math.sin(progress * Math.PI * 6.0) * 0.12;
 
       // Lerp position
       const curX = anim.startX + (anim.targetX - anim.startX) * progress;
@@ -1642,50 +1668,73 @@ function animate() {
 
       mesh.position.x = curX - 5.5;
       mesh.position.z = curZ - 5.5;
-      mesh.position.y = 0.25 + bob;
+      mesh.position.y = bob;
 
-      // Orient rotation in travel direction
+      // Orient rotation along move direction + roll/waddle
       const dx = anim.targetX - anim.startX;
       const dz = anim.targetZ - anim.startZ;
-      mesh.rotation.y = Math.atan2(dx, dz);
+      const moveAngle = Math.atan2(dx, dz);
+      mesh.rotation.y = moveAngle;
+      mesh.rotation.z = roll;
 
       if (progress >= 1.0) {
-        mesh.position.y = 0.25;
+        mesh.position.y = 0;
+        mesh.rotation.z = 0;
         // Restore team orientation
         mesh.rotation.y = (mesh.userData.team === 'blue') ? 0 : Math.PI;
         mesh.userData.moveAnim = null;
       }
     }
 
-    // Handle Attacker Lunge (Strike animation)
+    // Handle Attacker Lunge (Strike animation - jumps slightly and slams down)
     if (mesh.userData.lungeTime > 0) {
       mesh.userData.lungeTime -= dt;
       const progress = (0.4 - mesh.userData.lungeTime) / 0.4;
-      const strikeDist = Math.sin(progress * Math.PI) * 0.65;
+      const strikeDist = Math.sin(progress * Math.PI) * 0.75;
       const dir = mesh.userData.lungeDirection;
 
+      // Attacker jumps and lunges
+      const lungeJump = Math.sin(progress * Math.PI) * 0.38;
       mesh.position.x = (mesh.userData.gridX - 5.5) + dir.x * strikeDist;
       mesh.position.z = (mesh.userData.gridZ - 5.5) + dir.z * strikeDist;
+      mesh.position.y = lungeJump;
 
-      // Tilt angle
-      const tilt = 0.35;
+      // Dynamic forward bend tilt
+      const tilt = 0.55;
       mesh.rotation.x = dir.z * Math.sin(progress * Math.PI) * tilt;
       mesh.rotation.z = -dir.x * Math.sin(progress * Math.PI) * tilt;
+
+      // Flash weapon emissive at peak strike point
+      if (progress > 0.4 && progress < 0.6) {
+        mesh.traverse(child => {
+          if (child.isMesh && child.material) {
+            child.material.emissive?.setHex(0xffffff);
+          }
+        });
+      } else {
+        mesh.traverse(child => {
+          if (child.isMesh && child.material) {
+            const orig = child.userData.originalEmissive || 0x000000;
+            child.material.emissive?.setHex(orig);
+          }
+        });
+      }
 
       if (mesh.userData.lungeTime <= 0) {
         mesh.position.x = mesh.userData.gridX - 5.5;
         mesh.position.z = mesh.userData.gridZ - 5.5;
+        mesh.position.y = 0;
         mesh.rotation.x = 0;
         mesh.rotation.z = 0;
         mesh.rotation.y = (mesh.userData.team === 'blue') ? 0 : Math.PI;
       }
     }
 
-    // Handle Victim damage flash and recoil jump
+    // Handle Victim damage flash, shake, and recoil jump
     if (mesh.userData.hitFlashTime > 0) {
       mesh.userData.hitFlashTime -= dt;
       
-      const flashColor = Math.sin(Date.now() * 0.04) > 0 ? 0xff0055 : 0xffffff;
+      const flashColor = Math.sin(Date.now() * 0.05) > 0 ? 0xff0055 : 0xffffff;
       
       mesh.traverse(child => {
         if (child.isMesh && child.material) {
@@ -1693,12 +1742,20 @@ function animate() {
         }
       });
 
-      const bounceHeight = Math.sin((mesh.userData.hitFlashTime / 0.35) * Math.PI) * 0.35;
-      mesh.position.y = 0.25 + bounceHeight;
+      // Recoil jump + shaking offset
+      const bounceHeight = Math.sin((mesh.userData.hitFlashTime / 0.35) * Math.PI) * 0.45;
+      const shakeX = (Math.random() - 0.5) * 0.16;
+      const shakeZ = (Math.random() - 0.5) * 0.16;
+
+      mesh.position.y = bounceHeight;
+      mesh.position.x = (mesh.userData.gridX - 5.5) + shakeX;
+      mesh.position.z = (mesh.userData.gridZ - 5.5) + shakeZ;
 
       if (mesh.userData.hitFlashTime <= 0) {
         // Reset positioning and color state
-        mesh.position.y = 0.25;
+        mesh.position.y = 0;
+        mesh.position.x = mesh.userData.gridX - 5.5;
+        mesh.position.z = mesh.userData.gridZ - 5.5;
         mesh.traverse(child => {
           if (child.isMesh && child.material) {
             const orig = child.userData.originalEmissive || 0x000000;

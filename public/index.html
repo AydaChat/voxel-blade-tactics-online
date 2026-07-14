@@ -68,6 +68,10 @@
       </div>
 
       <div id="lobby-status" class="lobby-status">Komutan adınızı girin...</div>
+      <button id="guide-open-btn-lobby" class="cyber-btn cyber-btn-accent mt-4" style="width: 100%;">
+        <span class="btn-text">📖 KOMUTAN REHBERİ</span>
+        <span class="btn-glitch"></span>
+      </button>
     </div>
   </div>
 
@@ -105,9 +109,14 @@
           <span class="turn-text" id="turn-text-span">BAŞLATILIYOR...</span>
         </div>
 
-        <div class="hud-panel team-info">
-          <span class="label">KOMUTAN:</span>
-          <span class="value" id="hud-team-color">MAVİ</span>
+        <div class="hud-panel team-info" style="display: flex; align-items: center; gap: 10px;">
+          <div>
+            <span class="label">KOMUTAN:</span>
+            <span class="value" id="hud-team-color">MAVİ</span>
+          </div>
+          <button id="guide-open-btn-game" class="cyber-btn cyber-btn-accent" style="padding: 0.3rem 0.8rem; font-size: 0.7rem; border-color: rgba(255, 183, 0, 0.4);">
+            <span class="btn-text">REHBER</span>
+          </button>
         </div>
       </div>
 
@@ -197,6 +206,133 @@
   <div id="error-toast" class="error-toast">
     <span class="error-icon">!</span>
     <span id="error-toast-text" class="error-message">Bir hata oluştu.</span>
+  </div>
+
+  <!-- GUIDE MODAL -->
+  <div id="guide-modal" class="guide-modal-overlay hidden">
+    <div class="guide-modal-card">
+      <div class="guide-modal-header">
+        <h2 class="neon-text-blue">KOMUTAN REHBERİ &amp; BİRLİK KILAVUZU</h2>
+        <button id="guide-close-btn" class="guide-close-btn">&times;</button>
+      </div>
+      <div class="guide-modal-body">
+        <div class="guide-grid">
+          
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <span class="unit-icon">🛡️</span>
+              <h4>Piyade (Infantry)</h4>
+            </div>
+            <p>Temel yakın dövüş askeri. Ön safları tutmak ve düşman ilerleyişini yavaşlatmak için idealdir.</p>
+            <div class="guide-stats">
+              <span><b>CAN:</b> 85-90</span>
+              <span><b>SAL:</b> 20-22</span>
+              <span><b>MNZ:</b> 1</span>
+              <span><b>HRK:</b> 3</span>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <span class="unit-icon">🏹</span>
+              <h4>Okçu (Archer)</h4>
+            </div>
+            <p>Uzun menzilli atıcı. Ön saftaki koruyucuların arkasından güvenle düşmanı yıpratır.</p>
+            <div class="guide-stats">
+              <span><b>CAN:</b> 60</span>
+              <span><b>SAL:</b> 18</span>
+              <span><b>MNZ:</b> 4</span>
+              <span><b>HRK:</b> 3</span>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <span class="unit-icon">🏇</span>
+              <h4>Süvari (Cavalry)</h4>
+            </div>
+            <p>Son derece hızlı atlı birlik. Geniş manevra kabiliyeti ile düşman arkasına sızabilir.</p>
+            <div class="guide-stats">
+              <span><b>CAN:</b> 80</span>
+              <span><b>SAL:</b> 25</span>
+              <span><b>MNZ:</b> 1</span>
+              <span><b>HRK:</b> 4</span>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <span class="unit-icon">🧱</span>
+              <h4>Ağır Muhafız (HeavyGuard)</h4>
+            </div>
+            <p>Devasa kalkanlı ve zırhlı tank birimi. Çok yavaş hareket etse de öldürülmesi son derece zorur.</p>
+            <div class="guide-stats">
+              <span><b>CAN:</b> 130</span>
+              <span><b>SAL:</b> 35</span>
+              <span><b>MNZ:</b> 1</span>
+              <span><b>HRK:</b> 2</span>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <span class="unit-icon">⚔️</span>
+              <h4>Şövalye (Knight)</h4>
+            </div>
+            <p>Elit çift el kılıç ustası. Yakın mesafede çok yüksek yıkım gücüne sahip zırhlı savaşçı.</p>
+            <div class="guide-stats">
+              <span><b>CAN:</b> 90</span>
+              <span><b>SAL:</b> 40</span>
+              <span><b>MNZ:</b> 1</span>
+              <span><b>HRK:</b> 3</span>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <span class="unit-icon">☄️</span>
+              <h4>Mancınık (Catapult)</h4>
+            </div>
+            <p>Devasa kuşatma silahı. Aşırı hasar ve menzile sahiptir, ancak yavaş hareket eder ve yakından savunmasızdır.</p>
+            <div class="guide-stats">
+              <span><b>CAN:</b> 45</span>
+              <span><b>SAL:</b> 55</span>
+              <span><b>MNZ:</b> 6</span>
+              <span><b>HRK:</b> 1</span>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <span class="unit-icon">👑</span>
+              <h4>Kaptan (Captain)</h4>
+            </div>
+            <p>Orta menzilli lider birim. 2 kare menzilli kılıç savuruşlarıyla hem dengeli hem de taktikseldir.</p>
+            <div class="guide-stats">
+              <span><b>CAN:</b> 105</span>
+              <span><b>SAL:</b> 30</span>
+              <span><b>MNZ:</b> 2</span>
+              <span><b>HRK:</b> 3</span>
+            </div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <span class="unit-icon">🔮</span>
+              <h4>Büyücü (Mage)</h4>
+            </div>
+            <p>Mistik güçlere sahip menzilli yıkıcı. Yüksek büyü hasarı ile zırhlı hedefleri eritebilir.</p>
+            <div class="guide-stats">
+              <span><b>CAN:</b> 50</span>
+              <span><b>SAL:</b> 42</span>
+              <span><b>MNZ:</b> 5</span>
+              <span><b>HRK:</b> 2</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Load Scripts -->
