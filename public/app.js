@@ -241,6 +241,14 @@ const usernameStep = document.getElementById('username-step');
 const roomStep = document.getElementById('room-step');
 const badgeUsername = document.getElementById('badge-username');
 
+// AI step elements
+const aiModeBtn = document.getElementById('ai-mode-btn');
+const aiDifficultyStep = document.getElementById('ai-difficulty-step');
+const aiEasyBtn = document.getElementById('ai-easy-btn');
+const aiMediumBtn = document.getElementById('ai-medium-btn');
+const aiHardBtn = document.getElementById('ai-hard-btn');
+const aiBackBtn = document.getElementById('ai-back-btn');
+
 // HUD elements
 const hudRoomCode = document.getElementById('hud-room-code');
 const hudTurnCount = document.getElementById('hud-turn-count');
@@ -332,6 +340,37 @@ joinBtn.addEventListener('click', () => {
   socket.emit('joinRoom', { code, username: myUsername });
   lobbyStatus.textContent = `Odaya (${code}) bağlanılıyor...`;
 });
+
+// AI Mode Button click
+aiModeBtn.addEventListener('click', () => {
+  roomStep.classList.add('hidden');
+  aiDifficultyStep.classList.remove('hidden');
+  lobbyStatus.textContent = 'Yapay zeka zorluk seviyesini seçin.';
+  playSound('select');
+});
+
+// AI Back Button click
+aiBackBtn.addEventListener('click', () => {
+  aiDifficultyStep.classList.add('hidden');
+  roomStep.classList.remove('hidden');
+  lobbyStatus.textContent = `Komutan ${myUsername}, oda seçin.`;
+  playSound('select');
+});
+
+// Start AI Room events
+function startAIGame(difficulty) {
+  if (!myUsername) { showError('Önce kullanıcı adı belirleyin.'); return; }
+  socket.emit('createRoom', { 
+    username: myUsername, 
+    vsAI: true, 
+    difficulty: difficulty 
+  });
+  lobbyStatus.textContent = `Bot rakip hazırlanıyor (${difficulty.toUpperCase()})...`;
+}
+
+aiEasyBtn.addEventListener('click', () => startAIGame('easy'));
+aiMediumBtn.addEventListener('click', () => startAIGame('medium'));
+aiHardBtn.addEventListener('click', () => startAIGame('hard'));
 
 endTurnBtn.addEventListener('click', () => {
   if (myTeam === activeTeam) {

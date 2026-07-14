@@ -127,13 +127,310 @@ function doEndTurn(room, io, roomCode) {
     turn: gameState.turn,
     gameState
   });
+
+  // Eğer odada AI botu varsa ve sıra botun (kırmızı) ise bot hamlesini tetikle
+  if (room.vsAI && nextTeam === 'red' && !gameState.winner) {
+    // Düşünme hissi için gecikmeli tetikle
+    setTimeout(() => {
+      triggerAILogic(room, io);
+    }, 1100);
+  }
+}
+
+// ── Yapay Zeka Karar Motoru (AI Decision Engine) ──────────────────────────
+function triggerAILogic(room, io) {
+  const { gameState } = room;
+  if (gameState.winner || gameState.activeTeam !== 'red') return;
+
+  // Botun eyleme geçirebileceği kırmızı birimler
+  const redUnits = gameState.units.filter(u => u.team === 'red');
+  const blueUnits = gameState.units.filter(u => u.team === 'blue');
+
+  if (redUnits.length === 0 || blueUnits.length === 0) {
+    doEndTurn(room, io, room.code);
+    return;
+  }
+
+  const diff = room.difficulty || 'medium';
+  let decision = null;
+
+  if (diff === 'easy') {
+    decision = calculateEasyDecision(room, redUnits, blueUnits);
+  } else if (diff === 'medium') {
+    decision = calculateMediumDecision(room, redUnits, blueUnits);
+  } else {
+    decision = calculateHardDecision(room, redUnits, blueUnits);
+  }
+
+  if (!decision || decision.type === 'skip') {
+    doEndTurn(room, io, room.code);
+    return;
+  }
+
+  const { unit, target } = decision;
+
+  if (decision.type === 'move') {
+    const oldX = unit.x;
+    const oldZ = unit.z;
+    unit.x = target.x;
+    unit.z = target.z;
+    unit.ap = 0; 
+
+    io.to(room.code).emit('unitMoved', {
+      unitId: unit.id,
+      oldX,
+      oldZ,
+      newX: target.x,
+      newZ: target.z,
+      apRemaining: 0,
+      gameState
+    });
+
+    setTimeout(() => {
+      doEndTurn(room, io, room.code);
+    }, 650);
+
+  } else if (decision.type === 'attack') {
+    unit.ap = 0; 
+
+    const variance = 0.85 + Math.random() * 0.3;
+    const damage = Math.max(1, Math.round(unit.atk * variance));
+    target.hp -= damage;
+
+    const targetDead = target.hp <= 0;
+    if (targetDead) {
+      gameState.units = gameState.units.filter(u => u.id !== target.id);
+    }
+
+    const blueRemaining = gameState.units.some(u => u.team === 'blue');
+    if (!blueRemaining) {
+      gameState.winner = 'red';
+    }
+
+    io.to(room.code).emit('unitAttacked', {
+      attackerId: unit.id,
+      targetId: target.id,
+      damage,
+      targetHp: target.hp,
+      targetDead,
+      gameState
+    });
+
+    if (gameState.winner) {
+      io.to(room.code).emit('gameOver', { winner: 'red' });
+    } else {
+      const delay = targetDead ? 950 : 650;
+      setTimeout(() => {
+        doEndTurn(room, io, room.code);
+      }, delay);
+    }
+  }
+}
+
+// Kolay Mod Karar Algoritması
+function calculateEasyDecision(room, redUnits, blueUnits) {
+  if (Math.random() < 0.3) return { type: 'skip' };
+
+  const unit = redUnits[Math.floor(Math.random() * redUnits.length)];
+  const inRangeTargets = blueUnits.filter(b => {
+    const dist = Math.abs(unit.x - b.x) + Math.abs(unit.z - b.z);
+    return dist <= unit.range;
+  });
+
+  if (inRangeTargets.length > 0) {
+    const target = inRangeTargets[Math.floor(Math.random() * inRangeTargets.length)];
+    return { type: 'attack', unit, target };
+  }
+
+  const moves = getValidMoves(room, unit);
+  if (moves.length > 0) {
+    const target = moves[Math.floor(Math.random() * moves.length)];
+    return { type: 'move', unit, target };
+  }
+
+  return { type: 'skip' };
+}
+
+// Orta Mod Karar Algoritması
+function calculateMediumDecision(room, redUnits, blueUnits) {
+  for (const unit of redUnits) {
+    const targets = blueUnits.filter(b => {
+      const dist = Math.abs(unit.x - b.x) + Math.abs(unit.z - b.z);
+      return dist <= unit.range;
+    });
+
+    if (targets.length > 0) {
+      targets.sort((a, b) => a.hp - b.hp);
+      const target = Math.random() < 0.6 ? targets[0] : targets[Math.floor(Math.random() * targets.length)];
+      return { type: 'attack', unit, target };
+    }
+  }
+
+  const meleeUnits = redUnits.filter(u => ['Cavalry', 'Knight', 'Infantry', 'HeavyGuard', 'Captain'].includes(u.type));
+  const candidateUnits = meleeUnits.length > 0 ? meleeUnits : redUnits;
+  const unit = candidateUnits[Math.floor(Math.random() * candidateUnits.length)];
+
+  const moves = getValidMoves(room, unit);
+  if (moves.length > 0) {
+    let closestBlue = null;
+    let minDist = Infinity;
+    blueUnits.forEach(b => {
+      const dist = Math.abs(unit.x - b.x) + Math.abs(unit.z - b.z);
+      if (dist < minDist) {
+        minDist = dist;
+        closestBlue = b;
+      }
+    });
+
+    if (closestBlue) {
+      let bestMove = moves[0];
+      let bestDist = Infinity;
+      moves.forEach(m => {
+        const dist = Math.abs(m.x - closestBlue.x) + Math.abs(m.z - closestBlue.z);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestMove = m;
+        }
+      });
+      return { type: 'move', unit, target: bestMove };
+    }
+  }
+
+  return { type: 'skip' };
+}
+
+// Zor Mod Karar Algoritması (Heuristic Taktik)
+function calculateHardDecision(room, redUnits, blueUnits) {
+  for (const unit of redUnits) {
+    const targets = blueUnits.filter(b => {
+      const dist = Math.abs(unit.x - b.x) + Math.abs(unit.z - b.z);
+      return dist <= unit.range && b.hp <= Math.round(unit.atk * 0.85);
+    });
+
+    if (targets.length > 0) {
+      targets.sort((a, b) => {
+        const priority = { 'Mage': 3, 'Catapult': 3, 'Archer': 2, 'Captain': 2, 'Knight': 2, 'Infantry': 1 };
+        return (priority[b.type] || 0) - (priority[a.type] || 0);
+      });
+      return { type: 'attack', unit, target: targets[0] };
+    }
+  }
+
+  let bestAttack = null;
+  let bestScore = -Infinity;
+
+  for (const unit of redUnits) {
+    const targets = blueUnits.filter(b => {
+      const dist = Math.abs(unit.x - b.x) + Math.abs(unit.z - b.z);
+      return dist <= unit.range;
+    });
+
+    for (const tgt of targets) {
+      const dmgPct = Math.min(1.0, unit.atk / tgt.maxHp);
+      let threatBonus = 0;
+      if (['Mage', 'Catapult'].includes(tgt.type)) threatBonus = 50;
+      else if (['Knight', 'Captain', 'Archer'].includes(tgt.type)) threatBonus = 30;
+
+      const score = (dmgPct * 100) + threatBonus;
+      if (score > bestScore) {
+        bestScore = score;
+        bestAttack = { type: 'attack', unit, target: tgt };
+      }
+    }
+  }
+
+  if (bestAttack) return bestAttack;
+
+  redUnits.sort((a, b) => {
+    const prio = { 'Cavalry': 5, 'Knight': 4, 'Captain': 3, 'Infantry': 2, 'HeavyGuard': 1 };
+    return (prio[b.type] || 0) - (prio[a.type] || 0);
+  });
+
+  for (const unit of redUnits) {
+    const moves = getValidMoves(room, unit);
+    if (moves.length === 0) continue;
+
+    let closestBlue = null;
+    let minDist = Infinity;
+    blueUnits.forEach(b => {
+      const dist = Math.abs(unit.x - b.x) + Math.abs(unit.z - b.z);
+      if (dist < minDist) {
+        minDist = dist;
+        closestBlue = b;
+      }
+    });
+
+    if (!closestBlue) continue;
+
+    const isRanged = ['Catapult', 'Mage', 'Archer'].includes(unit.type);
+
+    if (isRanged) {
+      let bestMove = null;
+      let bestWeight = -Infinity;
+
+      moves.forEach(m => {
+        const dist = Math.abs(m.x - closestBlue.x) + Math.abs(m.z - closestBlue.z);
+        let weight = 0;
+        if (dist === unit.range) weight += 100;
+        else if (dist > unit.range) weight += (50 - (dist - unit.range) * 10);
+        else weight += (dist * 15);
+
+        const threat = blueUnits.some(b => {
+          if (['Infantry', 'Knight', 'Cavalry'].includes(b.type)) {
+            return (Math.abs(m.x - b.x) + Math.abs(m.z - b.z)) <= b.mov;
+          }
+          return false;
+        });
+        if (!threat) weight += 30;
+
+        if (weight > bestWeight) {
+          bestWeight = weight;
+          bestMove = m;
+        }
+      });
+
+      if (bestMove) return { type: 'move', unit, target: bestMove };
+
+    } else {
+      let bestMove = moves[0];
+      let bestDist = Infinity;
+
+      moves.forEach(m => {
+        const dist = Math.abs(m.x - closestBlue.x) + Math.abs(m.z - closestBlue.z);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestMove = m;
+        }
+      });
+
+      return { type: 'move', unit, target: bestMove };
+    }
+  }
+
+  return { type: 'skip' };
+}
+
+// Birlikler için hareket karesi hesaplama
+function getValidMoves(room, unit) {
+  const valid = [];
+  for (let x = 0; x < 12; x++) {
+    for (let z = 0; z < 12; z++) {
+      const dist = Math.abs(unit.x - x) + Math.abs(unit.z - z);
+      if (dist > 0 && dist <= unit.mov) {
+        if (!room.gameState.units.some(u => u.x === x && u.z === z)) {
+          valid.push({ x, z });
+        }
+      }
+    }
+  }
+  return valid;
 }
 
 io.on('connection', (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
   // Create room event
-  socket.on('createRoom', ({ username } = {}) => {
+  socket.on('createRoom', ({ username, vsAI, difficulty } = {}) => {
     const code = generateRoomCode();
     const playerName = (username || 'Oyuncu-1').substring(0, 16).toUpperCase();
     rooms[code] = {
@@ -144,11 +441,33 @@ io.on('connection', (socket) => {
         activeTeam: 'blue',
         winner: null,
         turn: 1
-      }
+      },
+      vsAI: !!vsAI,
+      difficulty: difficulty || 'medium'
     };
+
     socket.join(code);
-    socket.emit('roomCreated', { code });
-    console.log(`Oda oluşturuldu: ${code} - Oyuncu: ${playerName}`);
+
+    if (vsAI) {
+      const botName = `YAPAY ZEKA (${(difficulty || 'medium').toUpperCase()})`;
+      rooms[code].players.push({
+        id: 'AI_BOT',
+        team: 'red',
+        name: botName,
+        username: botName
+      });
+      console.log(`Oda oluşturuldu (VS AI): ${code} - Oyuncu: ${playerName} - Zorluk: ${difficulty}`);
+
+      socket.emit('gameStart', {
+        team: 'blue',
+        players: rooms[code].players,
+        gameState: rooms[code].gameState,
+        roomCode: code
+      });
+    } else {
+      socket.emit('roomCreated', { code });
+      console.log(`Oda oluşturuldu: ${code} - Oyuncu: ${playerName}`);
+    }
   });
 
   // Join room event
