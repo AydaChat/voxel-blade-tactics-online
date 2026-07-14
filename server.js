@@ -51,11 +51,12 @@ io.on('connection', (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
   // Create room event
-  socket.on('createRoom', () => {
+  socket.on('createRoom', ({ username } = {}) => {
     const code = generateRoomCode();
+    const playerName = (username || 'Oyuncu-1').substring(0, 16).toUpperCase();
     rooms[code] = {
       code,
-      players: [{ id: socket.id, team: 'blue', name: 'Player 1' }],
+      players: [{ id: socket.id, team: 'blue', name: playerName, username: playerName }],
       gameState: {
         units: createInitialUnits(),
         activeTeam: 'blue',
@@ -65,11 +66,11 @@ io.on('connection', (socket) => {
     };
     socket.join(code);
     socket.emit('roomCreated', { code });
-    console.log(`Room created: ${code} by ${socket.id}`);
+    console.log(`Oda oluşturuldu: ${code} - Oyuncu: ${playerName}`);
   });
 
   // Join room event
-  socket.on('joinRoom', ({ code }) => {
+  socket.on('joinRoom', ({ code, username } = {}) => {
     if (!code) {
       return socket.emit('errorMsg', { message: 'Geçersiz oda kodu.' });
     }
@@ -85,10 +86,11 @@ io.on('connection', (socket) => {
     }
 
     // Add Player 2 as 'red'
-    room.players.push({ id: socket.id, team: 'red', name: 'Player 2' });
+    const playerName = (username || 'Oyuncu-2').substring(0, 16).toUpperCase();
+    room.players.push({ id: socket.id, team: 'red', name: playerName, username: playerName });
     socket.join(cleanCode);
 
-    console.log(`Socket ${socket.id} joined Room ${cleanCode}`);
+    console.log(`${playerName} odaya katıldı: ${cleanCode}`);
 
     // Notify each player that game has started
     const player1 = room.players[0];

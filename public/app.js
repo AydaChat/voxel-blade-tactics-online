@@ -193,11 +193,13 @@ function playSound(type) {
 }
 
 // Game State variables
-let myTeam = null; // 'blue' or 'red'
+let myTeam = null;           // 'blue' or 'red'
+let myUsername = '';         // Confirmed username
+let opponentUsername = '';   // Opponent's username
 let currentRoomCode = null;
 let activeTeam = 'blue';
 let currentTurn = 1;
-let unitsData = []; // State of units from server
+let unitsData = [];          // State of units from server
 let selectedUnitId = null;
 
 // Three.js Scene Variables
@@ -231,6 +233,13 @@ const createBtn = document.getElementById('create-btn');
 const displayRoomCode = document.getElementById('display-room-code');
 const lobbyStatus = document.getElementById('lobby-status');
 
+// Username step elements
+const usernameInput = document.getElementById('username-input');
+const usernameConfirmBtn = document.getElementById('username-confirm-btn');
+const usernameStep = document.getElementById('username-step');
+const roomStep = document.getElementById('room-step');
+const badgeUsername = document.getElementById('badge-username');
+
 // HUD elements
 const hudRoomCode = document.getElementById('hud-room-code');
 const hudTurnCount = document.getElementById('hud-turn-count');
@@ -254,19 +263,47 @@ const diagAp = document.getElementById('diag-ap');
 const combatLog = document.getElementById('combat-log');
 const returnLobbyBtn = document.getElementById('return-lobby-btn');
 
+// ==========================================
+// USERNAME STEP LOGIC
+// ==========================================
+function confirmUsername() {
+  const raw = usernameInput.value.trim();
+  if (raw.length < 2) {
+    showError('Komutan adı en az 2 karakter olmalıdır.');
+    return;
+  }
+  myUsername = raw.toUpperCase();
+  // Update badge
+  badgeUsername.textContent = myUsername;
+  // Animate step transition
+  usernameStep.classList.add('hidden');
+  roomStep.classList.remove('hidden');
+  lobbyStatus.textContent = `Hoş geldin, ${myUsername}! Oda oluştur veya katıl.`;
+  playSound('turn');
+}
+
+// Allow Enter key on username input
+usernameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') confirmUsername();
+});
+
+usernameConfirmBtn.addEventListener('click', confirmUsername);
+
 // Lobby Button Events
 createBtn.addEventListener('click', () => {
-  socket.emit('createRoom');
+  if (!myUsername) { showError('Önce kullanıcı adı belirleyin.'); return; }
+  socket.emit('createRoom', { username: myUsername });
   lobbyStatus.textContent = 'Taktik oda oluşturuluyor...';
 });
 
 joinBtn.addEventListener('click', () => {
+  if (!myUsername) { showError('Önce kullanıcı adı belirleyin.'); return; }
   const code = roomInput.value.trim().toUpperCase();
   if (code.length !== 4) {
     showError('Oda kodu tam olarak 4 harfli olmalıdır.');
     return;
   }
-  socket.emit('joinRoom', { code });
+  socket.emit('joinRoom', { code, username: myUsername });
   lobbyStatus.textContent = `Odaya (${code}) bağlanılıyor...`;
 });
 
@@ -332,11 +369,18 @@ socket.on('gameStart', ({ team, players, gameState, roomCode }) => {
   lobbyScreen.classList.remove('active');
   gameScreen.classList.add('active');
 
+  // Store opponent username
+  const myPlayerData = players.find(p => p.team === team);
+  const oppPlayerData = players.find(p => p.team !== team);
+  if (myPlayerData) myUsername = myPlayerData.username || myUsername;
+  if (oppPlayerData) opponentUsername = oppPlayerData.username || 'RAKİP';
+
   // Update HUD values
   hudRoomCode.textContent = currentRoomCode;
   hudTurnCount.textContent = currentTurn;
   const teamText = myTeam === 'blue' ? 'MAVİ' : 'KIRMIZI';
-  hudTeamColor.textContent = teamText;
+  // Show username in HUD instead of just team color
+  hudTeamColor.textContent = myUsername;
   if (myTeam === 'blue') {
     hudTeamColor.className = 'value neon-text-blue';
   } else {
@@ -344,7 +388,8 @@ socket.on('gameStart', ({ team, players, gameState, roomCode }) => {
   }
 
   addLog(`Taktik bağlantı kuruldu. Sektöre hoş geldiniz.`, 'system');
-  addLog(`${teamText} takıma atandınız.`, myTeam);
+  addLog(`${myUsername} — ${teamText} takıma atandınız.`, myTeam);
+  addLog(`Rakibiniz: ${opponentUsername}`, 'system');
 
   // Initialize the 3D battlefield
   initThreeJS();

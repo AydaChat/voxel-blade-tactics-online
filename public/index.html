@@ -20,11 +20,36 @@
   <div id="lobby-screen" class="screen active">
     <div class="lobby-card">
       <div class="logo-container">
-        <h1 class="glitch-title" data-text="VOXEL & BLADE">VOXEL & BLADE</h1>
+        <h1 class="glitch-title" data-text="VOXEL &amp; BLADE">VOXEL &amp; BLADE</h1>
         <p class="subtitle">ÇEVRİMİÇİ TAKTİK</p>
       </div>
 
-      <div class="lobby-form">
+      <!-- STEP 1: Kullanıcı Adı -->
+      <div id="username-step" class="lobby-form">
+        <div class="step-label">
+          <span class="step-number">1</span>
+          <span class="step-title">KİMLİĞİNİ BELİRLE</span>
+        </div>
+        <div class="input-group">
+          <label for="username-input">KOMUTAN ADIN</label>
+          <input type="text" id="username-input" placeholder="ÖRN. SAVAŞÇI_42" maxlength="16" autocomplete="off">
+        </div>
+        <button id="username-confirm-btn" class="cyber-btn cyber-btn-primary">
+          <span class="btn-text">SAVAŞ ALANINA GİR ▶</span>
+          <span class="btn-glitch"></span>
+        </button>
+      </div>
+
+      <!-- STEP 2: Oda Seç (başlangıçta gizli) -->
+      <div id="room-step" class="lobby-form hidden">
+        <div class="step-label">
+          <span class="step-number">2</span>
+          <span class="step-title">ODA SEÇ</span>
+        </div>
+        <div class="player-badge" id="player-badge">
+          <span class="badge-icon">⚔</span>
+          <span id="badge-username">KOMUTAN</span>
+        </div>
         <div class="input-group">
           <label for="room-code-input">ODA KODUNU GİRİN</label>
           <input type="text" id="room-code-input" placeholder="ÖRN. ABCD" maxlength="4" autocomplete="off">
@@ -41,7 +66,8 @@
           <span class="btn-glitch"></span>
         </button>
       </div>
-      <div id="lobby-status" class="lobby-status">Giriş bekleniyor...</div>
+
+      <div id="lobby-status" class="lobby-status">Komutan adınızı girin...</div>
     </div>
   </div>
 
@@ -80,7 +106,7 @@
         </div>
 
         <div class="hud-panel team-info">
-          <span class="label">TAKIM:</span>
+          <span class="label">KOMUTAN:</span>
           <span class="value" id="hud-team-color">MAVİ</span>
         </div>
       </div>
