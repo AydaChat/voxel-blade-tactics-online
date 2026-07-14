@@ -32,19 +32,76 @@ function generateRoomCode() {
 // Initial units configuration (12x12 grid)
 // Team Blue starts at z = 0, Team Red starts at z = 11
 function createInitialUnits() {
-  return [
-    // Blue Team
-    { id: 'blue_cav', type: 'Cavalry', team: 'blue', name: 'Mavi Süvari', x: 2, z: 0, hp: 85, maxHp: 85, atk: 25, range: 1, mov: 5, ap: 2, maxAp: 2 },
-    { id: 'blue_inf1', type: 'Infantry', team: 'blue', name: 'Mavi Piyade 1', x: 4, z: 0, hp: 100, maxHp: 100, atk: 30, range: 1, mov: 3, ap: 2, maxAp: 2 },
-    { id: 'blue_inf2', type: 'Infantry', team: 'blue', name: 'Mavi Piyade 2', x: 7, z: 0, hp: 100, maxHp: 100, atk: 30, range: 1, mov: 3, ap: 2, maxAp: 2 },
-    { id: 'blue_arc', type: 'Archer', team: 'blue', name: 'Mavi Okçu', x: 9, z: 0, hp: 70, maxHp: 70, atk: 20, range: 4, mov: 3, ap: 2, maxAp: 2 },
+  const ap = 1, maxAp = 1;
+  const units = [];
 
-    // Red Team
-    { id: 'red_cav', type: 'Cavalry', team: 'red', name: 'Kırmızı Süvari', x: 2, z: 11, hp: 85, maxHp: 85, atk: 25, range: 1, mov: 5, ap: 2, maxAp: 2 },
-    { id: 'red_inf1', type: 'Infantry', team: 'red', name: 'Kırmızı Piyade 1', x: 4, z: 11, hp: 100, maxHp: 100, atk: 30, range: 1, mov: 3, ap: 2, maxAp: 2 },
-    { id: 'red_inf2', type: 'Infantry', team: 'red', name: 'Kırmızı Piyade 2', x: 7, z: 11, hp: 100, maxHp: 100, atk: 30, range: 1, mov: 3, ap: 2, maxAp: 2 },
-    { id: 'red_arc', type: 'Archer', team: 'red', name: 'Kırmızı Okçu', x: 9, z: 11, hp: 70, maxHp: 70, atk: 20, range: 4, mov: 3, ap: 2, maxAp: 2 }
+  // ── MAVI TAKIM ──────────────────────────────────────────────────────────
+  // Arka Sıra (z=0): Elit birimler
+  const blueBack = [
+    { id:'blue_b0',  type:'Cavalry',   name:'Mavi Süvari Sol',      x:0,  z:0, hp:80,  maxHp:80,  atk:25, range:1, mov:4 },
+    { id:'blue_b1',  type:'HeavyGuard',name:'Mavi Ağır Muhafız 1',  x:1,  z:0, hp:130, maxHp:130, atk:35, range:1, mov:2 },
+    { id:'blue_b2',  type:'Archer',    name:'Mavi Okçu 1',          x:2,  z:0, hp:60,  maxHp:60,  atk:18, range:4, mov:3 },
+    { id:'blue_b3',  type:'Knight',    name:'Mavi Şövalye 1',       x:3,  z:0, hp:90,  maxHp:90,  atk:40, range:1, mov:3 },
+    { id:'blue_b4',  type:'Catapult',  name:'Mavi Mancınık Sol',    x:4,  z:0, hp:45,  maxHp:45,  atk:55, range:6, mov:1 },
+    { id:'blue_b5',  type:'Captain',   name:'Mavi Kaptan 1',        x:5,  z:0, hp:105, maxHp:105, atk:30, range:2, mov:3 },
+    { id:'blue_b6',  type:'Mage',      name:'Mavi Büyücü',          x:6,  z:0, hp:50,  maxHp:50,  atk:42, range:5, mov:2 },
+    { id:'blue_b7',  type:'Captain',   name:'Mavi Kaptan 2',        x:7,  z:0, hp:105, maxHp:105, atk:30, range:2, mov:3 },
+    { id:'blue_b8',  type:'Catapult',  name:'Mavi Mancınık Sağ',   x:8,  z:0, hp:45,  maxHp:45,  atk:55, range:6, mov:1 },
+    { id:'blue_b9',  type:'Knight',    name:'Mavi Şövalye 2',       x:9,  z:0, hp:90,  maxHp:90,  atk:40, range:1, mov:3 },
+    { id:'blue_b10', type:'Archer',    name:'Mavi Okçu 2',          x:10, z:0, hp:60,  maxHp:60,  atk:18, range:4, mov:3 },
+    { id:'blue_b11', type:'Cavalry',   name:'Mavi Süvari Sağ',      x:11, z:0, hp:80,  maxHp:80,  atk:25, range:1, mov:4 },
   ];
+  // Ön Sıra (z=1): Piyade sırası
+  const blueFront = [
+    { id:'blue_f0',  type:'Infantry',  name:'Mavi Piyade 1',   x:0,  z:1, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'blue_f1',  type:'Infantry',  name:'Mavi Piyade 2',   x:1,  z:1, hp:90, maxHp:90, atk:20, range:1, mov:3 },
+    { id:'blue_f2',  type:'Infantry',  name:'Mavi Piyade 3',   x:2,  z:1, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'blue_f3',  type:'Infantry',  name:'Mavi Piyade 4',   x:3,  z:1, hp:80, maxHp:80, atk:25, range:1, mov:3 },
+    { id:'blue_f4',  type:'Infantry',  name:'Mavi Piyade 5',   x:4,  z:1, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'blue_f5',  type:'Infantry',  name:'Mavi Piyade 6',   x:5,  z:1, hp:90, maxHp:90, atk:20, range:1, mov:3 },
+    { id:'blue_f6',  type:'Infantry',  name:'Mavi Piyade 7',   x:6,  z:1, hp:90, maxHp:90, atk:20, range:1, mov:3 },
+    { id:'blue_f7',  type:'Infantry',  name:'Mavi Piyade 8',   x:7,  z:1, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'blue_f8',  type:'Infantry',  name:'Mavi Piyade 9',   x:8,  z:1, hp:80, maxHp:80, atk:25, range:1, mov:3 },
+    { id:'blue_f9',  type:'Infantry',  name:'Mavi Piyade 10',  x:9,  z:1, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'blue_f10', type:'Infantry',  name:'Mavi Piyade 11',  x:10, z:1, hp:90, maxHp:90, atk:20, range:1, mov:3 },
+    { id:'blue_f11', type:'Infantry',  name:'Mavi Piyade 12',  x:11, z:1, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+  ];
+
+  // ── KIRMIZI TAKIM ────────────────────────────────────────────────────────
+  // Arka Sıra (z=11)
+  const redBack = [
+    { id:'red_b0',  type:'Cavalry',   name:'Kırmızı Süvari Sol',      x:0,  z:11, hp:80,  maxHp:80,  atk:25, range:1, mov:4 },
+    { id:'red_b1',  type:'HeavyGuard',name:'Kırmızı Ağır Muhafız 1',  x:1,  z:11, hp:130, maxHp:130, atk:35, range:1, mov:2 },
+    { id:'red_b2',  type:'Archer',    name:'Kırmızı Okçu 1',          x:2,  z:11, hp:60,  maxHp:60,  atk:18, range:4, mov:3 },
+    { id:'red_b3',  type:'Knight',    name:'Kırmızı Şövalye 1',       x:3,  z:11, hp:90,  maxHp:90,  atk:40, range:1, mov:3 },
+    { id:'red_b4',  type:'Catapult',  name:'Kırmızı Mancınık Sol',    x:4,  z:11, hp:45,  maxHp:45,  atk:55, range:6, mov:1 },
+    { id:'red_b5',  type:'Captain',   name:'Kırmızı Kaptan 1',        x:5,  z:11, hp:105, maxHp:105, atk:30, range:2, mov:3 },
+    { id:'red_b6',  type:'Mage',      name:'Kırmızı Büyücü',          x:6,  z:11, hp:50,  maxHp:50,  atk:42, range:5, mov:2 },
+    { id:'red_b7',  type:'Captain',   name:'Kırmızı Kaptan 2',        x:7,  z:11, hp:105, maxHp:105, atk:30, range:2, mov:3 },
+    { id:'red_b8',  type:'Catapult',  name:'Kırmızı Mancınık Sağ',   x:8,  z:11, hp:45,  maxHp:45,  atk:55, range:6, mov:1 },
+    { id:'red_b9',  type:'Knight',    name:'Kırmızı Şövalye 2',       x:9,  z:11, hp:90,  maxHp:90,  atk:40, range:1, mov:3 },
+    { id:'red_b10', type:'Archer',    name:'Kırmızı Okçu 2',          x:10, z:11, hp:60,  maxHp:60,  atk:18, range:4, mov:3 },
+    { id:'red_b11', type:'Cavalry',   name:'Kırmızı Süvari Sağ',      x:11, z:11, hp:80,  maxHp:80,  atk:25, range:1, mov:4 },
+  ];
+  // Ön Sıra (z=10)
+  const redFront = [
+    { id:'red_f0',  type:'Infantry',  name:'Kırmızı Piyade 1',   x:0,  z:10, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'red_f1',  type:'Infantry',  name:'Kırmızı Piyade 2',   x:1,  z:10, hp:90, maxHp:90, atk:20, range:1, mov:3 },
+    { id:'red_f2',  type:'Infantry',  name:'Kırmızı Piyade 3',   x:2,  z:10, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'red_f3',  type:'Infantry',  name:'Kırmızı Piyade 4',   x:3,  z:10, hp:80, maxHp:80, atk:25, range:1, mov:3 },
+    { id:'red_f4',  type:'Infantry',  name:'Kırmızı Piyade 5',   x:4,  z:10, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'red_f5',  type:'Infantry',  name:'Kırmızı Piyade 6',   x:5,  z:10, hp:90, maxHp:90, atk:20, range:1, mov:3 },
+    { id:'red_f6',  type:'Infantry',  name:'Kırmızı Piyade 7',   x:6,  z:10, hp:90, maxHp:90, atk:20, range:1, mov:3 },
+    { id:'red_f7',  type:'Infantry',  name:'Kırmızı Piyade 8',   x:7,  z:10, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'red_f8',  type:'Infantry',  name:'Kırmızı Piyade 9',   x:8,  z:10, hp:80, maxHp:80, atk:25, range:1, mov:3 },
+    { id:'red_f9',  type:'Infantry',  name:'Kırmızı Piyade 10',  x:9,  z:10, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+    { id:'red_f10', type:'Infantry',  name:'Kırmızı Piyade 11',  x:10, z:10, hp:90, maxHp:90, atk:20, range:1, mov:3 },
+    { id:'red_f11', type:'Infantry',  name:'Kırmızı Piyade 12',  x:11, z:10, hp:85, maxHp:85, atk:22, range:1, mov:3 },
+  ];
+
+  [...blueBack, ...blueFront].forEach(u => units.push({ ...u, team:'blue', ap, maxAp }));
+  [...redBack,  ...redFront ].forEach(u => units.push({ ...u, team:'red',  ap, maxAp }));
+  return units;
 }
 
 io.on('connection', (socket) => {

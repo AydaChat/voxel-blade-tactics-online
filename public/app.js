@@ -497,13 +497,25 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
   // Clear selection overlays
   clearHighlights();
 
-  // Redraw diagnostics if necessary
+  // Redraw diagnostics — attacker AP değişti, ve hedef can güncellemesi
   setTimeout(() => {
-    if (selectedUnitId) {
-      const selectedUnit = unitsData.find(u => u.id === selectedUnitId);
-      if (selectedUnit) updateDiagnosticPanel(selectedUnit);
+    // Saldıranın panelini güncelle
+    if (selectedUnitId === attackerId) {
+      const attUnit = unitsData.find(u => u.id === attackerId);
+      if (attUnit) updateDiagnosticPanel(attUnit);
     }
-  }, 400);
+    // Hedef seçiliyse ve hayattaysa panelini güncelle
+    if (selectedUnitId === targetId && !targetDead) {
+      // targetHp sunucudan geldi, unitsData'da güncel
+      const tgtUnit = unitsData.find(u => u.id === targetId);
+      if (tgtUnit) updateDiagnosticPanel(tgtUnit);
+    }
+    // Hiçbiri seçili değilse de genel güncelleme
+    if (selectedUnitId && selectedUnitId !== attackerId && selectedUnitId !== targetId) {
+      const selUnit = unitsData.find(u => u.id === selectedUnitId);
+      if (selUnit) updateDiagnosticPanel(selUnit);
+    }
+  }, 420);
 });
 
 socket.on('turnEnded', ({ activeTeam: nextTeam, turn, gameState }) => {
@@ -1067,6 +1079,201 @@ function createVoxelUnit(type, team) {
     riderGroup.add(lanceGroup);
 
     group.add(riderGroup);
+  } else if (type === 'HeavyGuard') {
+    // Ağır Muhafız — geniş gövde, omuz zırhı, kule kalkan
+    const helmetMat2 = new THREE.MeshStandardMaterial({ color: 0x5a6a78, roughness: 0.2, metalness: 0.9 });
+    // Bacaklar (kalın)
+    [-0.16, 0.16].forEach(lx => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.18), steelMat);
+      leg.position.set(lx, 0.12, 0); leg.castShadow = true; group.add(leg);
+    });
+    // Gövde (çok geniş)
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.46, 0.32), steelMat);
+    torso.position.set(0, 0.48, 0); torso.castShadow = true; group.add(torso);
+    // Takım renk çizgisi
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.08, 0.33), tunicMat);
+    stripe.position.set(0, 0.48, 0); group.add(stripe);
+    // Omuz zırhları
+    [[-0.36, 0.66], [0.36, 0.66]].forEach(([ox, oy]) => {
+      const pad = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.32), helmetMat2);
+      pad.position.set(ox, oy, 0); pad.castShadow = true; group.add(pad);
+    });
+    // Baş
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.28, 0.3), new THREE.MeshStandardMaterial({ color: 0xffd1a4, roughness: 0.8 }));
+    head.position.set(0, 0.83, 0); head.castShadow = true; group.add(head);
+    // Kask (tam kafes miğfer)
+    const kask = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.28, 0.36), helmetMat2);
+    kask.position.set(0, 0.97, 0); kask.castShadow = true; group.add(kask);
+    // Kule kalkan
+    const kKalkan = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.6, 0.36), new THREE.MeshStandardMaterial({ color: shieldColor, roughness: 0.8 }));
+    kKalkan.position.set(-0.38, 0.5, 0.1); kKalkan.castShadow = true; group.add(kKalkan);
+    const kTrim = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.64, 0.04), steelMat);
+    kTrim.position.set(-0.39, 0.5, 0.3); group.add(kTrim);
+    const kIcon = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.14), tunicMat);
+    kIcon.position.set(-0.37, 0.5, 0.1); group.add(kIcon);
+    // Çekiç (sağ el)
+    const hammerHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.46), woodMat);
+    hammerHandle.position.set(0.36, 0.5, 0.12); group.add(hammerHandle);
+    const hammerHead = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.22, 0.16), steelMat);
+    hammerHead.position.set(0.36, 0.5, 0.36); group.add(hammerHead);
+
+  } else if (type === 'Knight') {
+    // Şövalye — parlak plaka zırh, tüylü miğfer, iki elli kılıç
+    const plateMat = new THREE.MeshStandardMaterial({ color: 0xccd9e8, roughness: 0.15, metalness: 0.95 });
+    const plumeMat2 = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0xffd700 : 0xff6600, emissive: 0x332200, emissiveIntensity: 0.3 });
+    // Bacaklar
+    [-0.14, 0.14].forEach(lx => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.22, 0.14), plateMat);
+      leg.position.set(lx, 0.11, 0); leg.castShadow = true; group.add(leg);
+    });
+    // Gövde (daha büyük)
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.46, 0.28), plateMat);
+    torso.position.set(0, 0.45, 0); torso.castShadow = true; group.add(torso);
+    const tunicOver = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.2, 0.29), tunicMat);
+    tunicOver.position.set(0, 0.34, 0); group.add(tunicOver);
+    // Baş
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), new THREE.MeshStandardMaterial({ color: 0xffd1a4, roughness: 0.8 }));
+    head.position.set(0, 0.8, 0); head.castShadow = true; group.add(head);
+    // Miğfer (yüz siperli)
+    const helmetBase = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.24, 0.34), plateMat);
+    helmetBase.position.set(0, 0.93, 0); helmetBase.castShadow = true; group.add(helmetBase);
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.1, 0.08), plateMat);
+    visor.position.set(0, 0.88, 0.2); group.add(visor);
+    // Tüy/Sorguç
+    const plumeTop = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.08), plumeMat2);
+    plumeTop.position.set(0, 1.1, 0); group.add(plumeTop);
+    const plumeMid = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, 0.12), plumeMat2);
+    plumeMid.position.set(0, 1.04, -0.04); group.add(plumeMid);
+    // Uzun kılıç (iki elle)
+    const longBlade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.62, 0.1), steelMat);
+    longBlade.position.set(0.3, 0.65, 0.12); longBlade.rotation.z = 0.18; group.add(longBlade);
+    const longGuard = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.08), goldMat);
+    longGuard.position.set(0.3, 0.36, 0.12); group.add(longGuard);
+    const longHandle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.05), woodMat);
+    longHandle.position.set(0.3, 0.28, 0.12); group.add(longHandle);
+
+  } else if (type === 'Catapult') {
+    // Mancınık — tahta kuşatma makinesi (insansız)
+    const darkWood = new THREE.MeshStandardMaterial({ color: 0x4a2e10, roughness: 0.9 });
+    const steelBolt = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4, metalness: 0.6 });
+    // Platform
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.07, 0.52), darkWood);
+    base.position.set(0, 0.035, 0); base.castShadow = true; group.add(base);
+    // Sol destek
+    const suppL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.34, 0.07), darkWood);
+    suppL.position.set(-0.24, 0.22, 0); suppL.castShadow = true; group.add(suppL);
+    // Sağ destek
+    const suppR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.34, 0.07), darkWood);
+    suppR.position.set(0.24, 0.22, 0); suppR.castShadow = true; group.add(suppR);
+    // Üst çapraz kiriş
+    const crossBeam = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 0.07), darkWood);
+    crossBeam.position.set(0, 0.37, 0); group.add(crossBeam);
+    // Fırlatma kolu (çapraz)
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.72, 0.06), darkWood);
+    arm.position.set(0, 0.55, 0.08);
+    arm.rotation.x = -Math.PI / 5;
+    arm.castShadow = true; group.add(arm);
+    // Kova (arm ucunda)
+    const bucket = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.16), darkWood);
+    bucket.position.set(0, 0.92, 0.3); group.add(bucket);
+    // Taş mermi
+    const stone = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.95 }));
+    stone.position.set(0, 1.0, 0.3); group.add(stone);
+    // Tekerlekler
+    [[-0.36, -0.18], [-0.36, 0.18], [0.36, -0.18], [0.36, 0.18]].forEach(([wx, wz]) => {
+      const wheel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.18, 0.18), darkWood);
+      wheel.position.set(wx, 0.09, wz); group.add(wheel);
+      const axle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), steelBolt);
+      axle.position.set(wx, 0.09, wz); group.add(axle);
+    });
+    // Takım rengi şerit
+    const bandMat = new THREE.MeshStandardMaterial({ color: tunicColor, emissive: tunicColor, emissiveIntensity: 0.25 });
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.04, 0.54), bandMat);
+    band.position.set(0, 0.07, 0); group.add(band);
+
+  } else if (type === 'Captain') {
+    // Kaptan — pelerin, sorguçlu miğfer, kılıç
+    const helmetMat3 = new THREE.MeshStandardMaterial({ color: helmetColor, roughness: 0.3, metalness: 0.7 });
+    const capeMat = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x003399 : 0x880011, roughness: 0.7 });
+    // Bacaklar
+    [-0.13, 0.13].forEach(lx => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.12), tunicMat);
+      leg.position.set(lx, 0.11, 0); leg.castShadow = true; group.add(leg);
+    });
+    // Pelerin (arkada)
+    const cape = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.06), capeMat);
+    cape.position.set(0, 0.45, -0.18); cape.castShadow = true; group.add(cape);
+    const capeLow = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.22, 0.07), capeMat);
+    capeLow.position.set(0, 0.2, -0.16); group.add(capeLow);
+    // Gövde
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.44, 0.28), tunicMat);
+    torso.position.set(0, 0.44, 0); torso.castShadow = true; group.add(torso);
+    // Altın kemer
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.06, 0.29), goldMat);
+    belt.position.set(0, 0.28, 0); group.add(belt);
+    // Baş
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), new THREE.MeshStandardMaterial({ color: 0xffd1a4, roughness: 0.8 }));
+    head.position.set(0, 0.8, 0); head.castShadow = true; group.add(head);
+    // Miğfer
+    const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.12, 0.32), helmetMat3);
+    helmet.position.set(0, 0.93, 0); group.add(helmet);
+    // Büyük tüy sorgucu
+    const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.06), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    p1.position.set(0, 1.08, 0); group.add(p1);
+    const p2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.1), new THREE.MeshStandardMaterial({ color: tunicColor, emissive: tunicColor, emissiveIntensity: 0.3 }));
+    p2.position.set(0, 1.08, -0.06); group.add(p2);
+    // Kılıç (yüksek tutulmuş)
+    const capBlade = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.44, 0.08), steelMat);
+    capBlade.position.set(0.3, 0.68, 0.1); group.add(capBlade);
+    const capGuard = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.06), goldMat);
+    capGuard.position.set(0.3, 0.47, 0.1); group.add(capGuard);
+    const capHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.1, 0.04), woodMat);
+    capHandle.position.set(0.3, 0.4, 0.1); group.add(capHandle);
+    // Kalkan
+    const capShield = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.34, 0.24), new THREE.MeshStandardMaterial({ color: shieldColor, roughness: 0.8 }));
+    capShield.position.set(-0.28, 0.44, 0.08); group.add(capShield);
+    const capShieldTrim = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.24), goldMat);
+    capShieldTrim.position.set(-0.28, 0.61, 0.08); group.add(capShieldTrim);
+
+  } else if (type === 'Mage') {
+    // Büyücü — uzun robe, sivri şapka, parlak asa
+    const robeMat = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x1a0055 : 0x550011, roughness: 0.7 });
+    const robeAccent = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x6600ff : 0xff3300, emissive: team === 'blue' ? 0x330088 : 0x660000, emissiveIntensity: 0.5 });
+    const crystalMat = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x00f0ff : 0xff3300, emissive: team === 'blue' ? 0x00a0cc : 0xcc1100, emissiveIntensity: 0.9, transparent: true, opacity: 0.85 });
+    // Etek (geniş)
+    const robe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.28, 0.28), robeMat);
+    robe.position.set(0, 0.14, 0); robe.castShadow = true; group.add(robe);
+    // Üst robe
+    const robeTorso = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.42, 0.26), robeMat);
+    robeTorso.position.set(0, 0.44, 0); robeTorso.castShadow = true; group.add(robeTorso);
+    // Yıldız motifi
+    const star = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.1, 0.27), robeAccent);
+    star.position.set(0, 0.44, 0); group.add(star);
+    // Baş
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.25), new THREE.MeshStandardMaterial({ color: 0xffd1a4, roughness: 0.8 }));
+    head.position.set(0, 0.78, 0); head.castShadow = true; group.add(head);
+    // Sivri şapka (üç parça)
+    const hatBrim = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.06, 0.38), robeMat);
+    hatBrim.position.set(0, 0.9, 0); group.add(hatBrim);
+    const hatMid = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.22), robeMat);
+    hatMid.position.set(0, 1.02, 0); group.add(hatMid);
+    const hatTop = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), robeMat);
+    hatTop.position.set(0, 1.19, 0); group.add(hatTop);
+    const hatTip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.1, 0.04), robeAccent);
+    hatTip.position.set(0, 1.33, 0); group.add(hatTip);
+    // Asa gövdesi
+    const staffShaft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.88, 0.04), woodMat);
+    staffShaft.position.set(0.28, 0.44, 0.08); group.add(staffShaft);
+    // Kristal küre (asa ucu)
+    const orb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), crystalMat);
+    orb.position.set(0.28, 0.92, 0.08); group.add(orb);
+    const orbGlow = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), new THREE.MeshStandardMaterial({
+      color: team === 'blue' ? 0x00f0ff : 0xff3300,
+      emissive: team === 'blue' ? 0x00a0cc : 0xcc1100,
+      emissiveIntensity: 0.6,
+      transparent: true, opacity: 0.3
+    }));
+    orbGlow.position.set(0.28, 0.92, 0.08); group.add(orbGlow);
   }
 
   // Set unit standing on the grid
@@ -1369,9 +1576,14 @@ function updateDiagnosticPanel(unit) {
   diagName.className = unit.team === 'blue' ? 'neon-text-blue' : 'neon-text-red';
   
   const typeTranslations = {
-    'Infantry': 'Piyade',
-    'Archer': 'Okçu',
-    'Cavalry': 'Süvari'
+    'Infantry':  'Piyade',
+    'Archer':    'Okçu',
+    'Cavalry':   'Süvari',
+    'HeavyGuard':'Ağır Muhafız',
+    'Knight':    'Şövalye',
+    'Catapult':  'Mancınık',
+    'Captain':   'Kaptan',
+    'Mage':      'Büyücü'
   };
   diagType.textContent = typeTranslations[unit.type] || unit.type;
   
