@@ -258,6 +258,9 @@ let controlsDefaultTarget = new THREE.Vector3(0, 0, 0);
 let isCinematicActive = false;
 let cinematicTimer = 0;
 let cameraShakeIntensity = 0;
+
+// Floating Combat UI variables
+let floatingUIList = [];
 let myUsername = '';         // Confirmed username
 let opponentUsername = '';   // Opponent's username
 let currentRoomCode = null;
@@ -442,6 +445,21 @@ endTurnBtn.addEventListener('click', () => {
   }
 });
 
+// Log Toggle Panel Minimizer
+const logToggleBtn = document.getElementById('log-toggle-btn');
+const combatLogPanel = document.getElementById('combat-log-panel');
+if (logToggleBtn && combatLogPanel) {
+  logToggleBtn.addEventListener('click', () => {
+    combatLogPanel.classList.toggle('minimized');
+    if (combatLogPanel.classList.contains('minimized')) {
+      logToggleBtn.textContent = '◀';
+    } else {
+      logToggleBtn.textContent = '▶';
+    }
+    playSound('select');
+  });
+}
+
 returnLobbyBtn.addEventListener('click', () => {
   window.location.reload();
 });
@@ -591,7 +609,6 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
         
         // Target slips to side (dodge dodge animation)
         const lungeDir = new THREE.Vector3(targetX - attackerX, 0, targetZ - attackerZ).normalize();
-        // Get perpendicular vector for side dodge
         const dodgeDir = new THREE.Vector3(-lungeDir.z, 0, lungeDir.x).multiplyScalar(0.4);
         
         target.userData.dodgeAnim = {
@@ -599,6 +616,9 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
           time: 0.35,
           elapsed: 0
         };
+
+        // Spawn floating Dodge Text over target unit
+        spawnFloatingDamageText(target.position, "SAVUŞTURULDU", false, true);
 
         addLog(`SAVUŞTURULDU! ${targetName} çevik bir hareketle saldırıdan sıyrıldı.`, 'system');
         return;
@@ -610,17 +630,25 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
       if (isCrit) {
         // 🔥 KRİTİK VURUŞ (Critical Hit)
         playSound('crit');
-        cameraShakeIntensity = 0.55; // Camera shake!
+        cameraShakeIntensity = 0.55; 
         
-        // Spawn massive golden spark particles
         spawnDebris(targetX, targetZ, 'gold');
+        // Spawn floating Crit Text over target unit
+        spawnFloatingDamageText(target.position, `KRİTİK -${damage}`, true, false);
+        
         addLog(`KRİTİK DARBE! ${attackerName}, ${targetName} birliğine ${damage} kritik hasar verdi!`, 'kill');
       } else {
         // Normal Darbe
         playSound('hit');
         spawnDebris(targetX, targetZ, target.userData.team);
+        // Spawn floating Normal Damage Text over target unit
+        spawnFloatingDamageText(target.position, `-${damage}`, false, false);
+
         addLog(`${attackerName}, ${targetName} birliğine ${damage} hasar verdi!`, 'damage');
       }
+
+      // Spawn floating Health Bar over target unit
+      spawnFloatingHealthBar(target.position, Math.max(0, targetHp), target.userData.maxHp || 90, target.userData.team);
 
       // 💀 Ölüm durumunu yönet
       if (targetDead) {
@@ -945,7 +973,8 @@ function syncUnits(units) {
         type: unit.type,
         name: unit.name,
         gridX: unit.x,
-        gridZ: unit.z
+        gridZ: unit.z,
+        maxHp: unit.maxHp || unit.hp
       };
       // Center unit position
       // Center unit position (set to y = 0 to place on grid)
@@ -2352,7 +2381,105 @@ function animate() {
     camera.position.y += (Math.random() - 0.5) * shake * 0.45;
   }
 
-  // ── 5. RENDER CALLS ───────────────────────────────────────────────────
+  // ── 5. UPDATE FLOATING COMBAT UI ──────────────────────────────────────
+  for (let i = floatingUIList.length - 1; i >= 0; i--) {
+    const ui = floatingUIList[i];
+    ui.life -= dt;
+
+    if (ui.life <= 0) {
+      ui.element.remove();
+      floatingUIList.splice(i, 1);
+      continue;
+    }
+
+    const pos2D = toScreenPosition(ui.pos3D);
+    if (ui.type === 'damage') {
+      ui.pos3D.y += dt * 0.45; // float upwards in world space
+    }
+
+    ui.element.style.left = `${pos2D.x}px`;
+    ui.element.style.top = `${pos2D.y}px`;
+  }
+
+  // ── 6. RENDER CALLS ───────────────────────────────────────────────────
   if (controls) controls.update();
   if (renderer && scene && camera) renderer.render(scene, camera);
+}
+
+// ── FLOATING COMBAT TEXT & HEALTH BARS PROJECTOR ─────────────────────────
+function toScreenPosition(objPosition) {
+  if (!camera || !renderer) return { x: 0, y: 0 };
+  const vector = objPosition.clone();
+  const widthHalf = 0.5 * renderer.domElement.clientWidth;
+  const heightHalf = 0.5 * renderer.domElement.clientHeight;
+
+  vector.project(camera);
+
+  return {
+    x: (vector.x * widthHalf) + widthHalf,
+    y: -(vector.y * heightHalf) + heightHalf
+  };
+}
+
+function spawnFloatingDamageText(position3D, text, isCrit, isDodge) {
+  const uiContainer = document.getElementById('ui-container');
+  if (!uiContainer) return;
+
+  const div = document.createElement('div');
+  div.className = 'floating-damage';
+  if (isCrit) div.classList.add('crit');
+  if (isDodge) div.classList.add('dodge');
+  div.textContent = text;
+
+  uiContainer.appendChild(div);
+
+  // Offset initial height a bit above unit torso
+  const pos3D = position3D.clone().add(new THREE.Vector3(0, 0.45, 0));
+
+  const uiItem = {
+    element: div,
+    pos3D: pos3D,
+    life: 1.2,
+    type: 'damage'
+  };
+
+  floatingUIList.push(uiItem);
+
+  const pos2D = toScreenPosition(uiItem.pos3D);
+  div.style.left = `${pos2D.x}px`;
+  div.style.top = `${pos2D.y}px`;
+}
+
+function spawnFloatingHealthBar(position3D, currentHp, maxHp, team) {
+  const uiContainer = document.getElementById('ui-container');
+  if (!uiContainer) return;
+
+  const barDiv = document.createElement('div');
+  barDiv.className = 'temp-health-bar';
+
+  const pct = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
+
+  barDiv.innerHTML = `
+    <div class="temp-health-text">HP: ${currentHp}/${maxHp}</div>
+    <div class="temp-health-bar-track">
+      <div class="temp-health-bar-fill ${team === 'blue' ? 'blue-team' : ''}" style="width: ${pct}%;"></div>
+    </div>
+  `;
+
+  uiContainer.appendChild(barDiv);
+
+  const pos3D = position3D.clone().add(new THREE.Vector3(0, 0.45, 0));
+
+  const uiItem = {
+    element: barDiv,
+    pos3D: pos3D,
+    life: 1.5,
+    type: 'hp'
+  };
+
+  floatingUIList.push(uiItem);
+
+  const pos2D = toScreenPosition(uiItem.pos3D);
+  barDiv.style.left = `${pos2D.x}px`;
+  barDiv.style.top = `${pos2D.y}px`;
 }

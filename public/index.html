@@ -124,6 +124,7 @@
   <div id="game-screen" class="screen">
     <!-- WebGL Canvas Container -->
     <div id="canvas-container"></div>
+    <div id="ui-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 5;"></div>
 
     <!-- HUD OVERLAY -->
     <div class="hud-container">
@@ -199,8 +200,11 @@
       </div>
 
       <!-- Right Panel (Tactical Log) -->
-      <div class="hud-right-panel hud-panel">
-        <div class="panel-header">SAVAŞ GÜNLÜĞÜ</div>
+      <div class="hud-right-panel hud-panel" id="combat-log-panel">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>SAVAŞ GÜNLÜĞÜ</span>
+          <button id="log-toggle-btn" class="log-toggle-btn" title="Kapat/Aç">▶</button>
+        </div>
         <div class="log-messages" id="combat-log">
           <div class="log-entry system-msg">Taktik bağlantı kuruldu. Savaş alanına hoş geldiniz.</div>
         </div>
