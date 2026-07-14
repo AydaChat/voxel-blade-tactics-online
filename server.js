@@ -104,6 +104,31 @@ function createInitialUnits() {
   return units;
 }
 
+// ── Tur geçiş yardımcısı ─────────────────────────────────────────────────
+// Hamle veya saldırı sonrası otomatik olarak çağrılır.
+function doEndTurn(room, io, roomCode) {
+  const { gameState } = room;
+  if (gameState.winner) return;
+
+  const nextTeam = gameState.activeTeam === 'blue' ? 'red' : 'blue';
+  gameState.activeTeam = nextTeam;
+
+  if (nextTeam === 'blue') {
+    gameState.turn += 1;
+  }
+
+  // Gelen takımın tüm birliklerinin EP'sini yenile
+  gameState.units.forEach(u => {
+    if (u.team === nextTeam) u.ap = u.maxAp;
+  });
+
+  io.to(roomCode).emit('turnEnded', {
+    activeTeam: nextTeam,
+    turn: gameState.turn,
+    gameState
+  });
+}
+
 io.on('connection', (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
@@ -207,7 +232,7 @@ io.on('connection', (socket) => {
     unit.z = targetZ;
     unit.ap -= 1;
 
-    // Broadcast move to all players in the room
+    // Hareket sonucunu odadaki herkese yayınla
     io.to(roomCode).emit('unitMoved', {
       unitId,
       oldX,
@@ -217,6 +242,9 @@ io.on('connection', (socket) => {
       apRemaining: unit.ap,
       gameState
     });
+
+    // Animasyonun görünmesi için kısa bekleme, sonra tur otomatik geçer
+    setTimeout(() => doEndTurn(room, io, roomCode), 650);
   });
 
   // Attack unit event
@@ -268,7 +296,7 @@ io.on('connection', (socket) => {
       gameState.winner = !blueRemaining ? 'red' : 'blue';
     }
 
-    // Broadcast attack results
+    // Saldırı sonucunu odadaki herkese yayınla
     io.to(roomCode).emit('unitAttacked', {
       attackerId,
       targetId,
@@ -280,10 +308,14 @@ io.on('connection', (socket) => {
 
     if (gameState.winner) {
       io.to(roomCode).emit('gameOver', { winner: gameState.winner });
+    } else {
+      // Ölüm animasyonu için biraz daha uzun bekleme, sonra tur otomatik geçer
+      const delay = targetDead ? 950 : 650;
+      setTimeout(() => doEndTurn(room, io, roomCode), delay);
     }
   });
 
-  // End turn event
+  // Turu Atla (pas geç) — hiç hamle yapmadan turu rakibe devret
   socket.on('endTurn', ({ roomCode }) => {
     const room = rooms[roomCode];
     if (!room) return socket.emit('errorMsg', { message: 'Oda bulunamadı.' });
@@ -295,26 +327,7 @@ io.on('connection', (socket) => {
     if (gameState.winner) return socket.emit('errorMsg', { message: 'Oyun çoktan bitti.' });
     if (gameState.activeTeam !== player.team) return socket.emit('errorMsg', { message: 'Sizin sıranız değil.' });
 
-    // Switch active team
-    const nextTeam = gameState.activeTeam === 'blue' ? 'red' : 'blue';
-    gameState.activeTeam = nextTeam;
-
-    if (nextTeam === 'blue') {
-      gameState.turn += 1;
-    }
-
-    // Replenish action points of the incoming team's units
-    gameState.units.forEach(u => {
-      if (u.team === nextTeam) {
-        u.ap = u.maxAp;
-      }
-    });
-
-    io.to(roomCode).emit('turnEnded', {
-      activeTeam: nextTeam,
-      turn: gameState.turn,
-      gameState
-    });
+    doEndTurn(room, io, roomCode);
   });
 
   // Disconnection handler
