@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voxel & Blade: Çevrimiçi Taktik</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Cyberpunk Background Matrix Canvas (Optional / Styled in CSS) -->
+  <div class="cyber-grid-overlay"></div>
+
+  <!-- LOBBY SCREEN -->
+  <div id="lobby-screen" class="screen active">
+    <div class="lobby-card">
+      <div class="logo-container">
+        <h1 class="glitch-title" data-text="VOXEL & BLADE">VOXEL & BLADE</h1>
+        <p class="subtitle">ÇEVRİMİÇİ TAKTİK</p>
+      </div>
+
+      <div class="lobby-form">
+        <div class="input-group">
+          <label for="room-code-input">ODA KODUNU GİRİN</label>
+          <input type="text" id="room-code-input" placeholder="ÖRN. ABCD" maxlength="4" autocomplete="off">
+        </div>
+        <button id="join-btn" class="cyber-btn cyber-btn-primary">
+          <span class="btn-text">MAÇA KATIL</span>
+          <span class="btn-glitch"></span>
+        </button>
+        <div class="divider">
+          <span>VEYA</span>
+        </div>
+        <button id="create-btn" class="cyber-btn cyber-btn-secondary">
+          <span class="btn-text">YENİ MAÇ OLUŞTUR</span>
+          <span class="btn-glitch"></span>
+        </button>
+      </div>
+      <div id="lobby-status" class="lobby-status">Giriş bekleniyor...</div>
+    </div>
+  </div>
+
+  <!-- WAITING LOBBY -->
+  <div id="waiting-screen" class="screen">
+    <div class="lobby-card text-center">
+      <h2 class="neon-text-blue">MAÇ OLUŞTURULDU</h2>
+      <p class="desc">Aşağıdaki oda kodunu rakibinizle paylaşın:</p>
+      <div class="room-code-display" id="display-room-code">----</div>
+      <div class="spinner-container">
+        <div class="cyber-spinner"></div>
+      </div>
+      <p class="status-pulse">RAKİBİN BAĞLANMASI BEKLENİYOR...</p>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="screen">
+    <!-- WebGL Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD OVERLAY -->
+    <div class="hud-container">
+      
+      <!-- Top Banner (Turn & Match Info) -->
+      <div class="hud-top-bar">
+        <div class="hud-panel room-info">
+          <span class="label">ODA:</span>
+          <span class="value" id="hud-room-code">----</span>
+          <span class="label gap">TUR:</span>
+          <span class="value" id="hud-turn-count">1</span>
+        </div>
+        
+        <div class="turn-announcer" id="turn-banner">
+          <span class="turn-text" id="turn-text-span">BAŞLATILIYOR...</span>
+        </div>
+
+        <div class="hud-panel team-info">
+          <span class="label">TAKIM:</span>
+          <span class="value" id="hud-team-color">MAVİ</span>
+        </div>
+      </div>
+
+      <!-- Left Panel (Selected Unit Diagnostic) -->
+      <div class="hud-left-panel hud-panel hidden" id="unit-diagnostic">
+        <div class="panel-header">BİRLİK BİLGİSİ</div>
+        <div class="diagnostic-content">
+          <h3 id="diag-name" class="neon-text-blue">UNIT_NAME</h3>
+          <div class="stat-row">
+            <span class="stat-label">TÜR</span>
+            <span class="stat-value" id="diag-type">Piyade</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">TAKIM</span>
+            <span class="stat-value" id="diag-team">Mavi</span>
+          </div>
+          <div class="health-bar-container">
+            <div class="health-label">
+              <span>CAN</span>
+              <span id="diag-hp-text">100/100</span>
+            </div>
+            <div class="health-bar-track">
+              <div class="health-bar-fill" id="diag-hp-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="box-label">SAL</span>
+              <span class="box-val" id="diag-atk">30</span>
+            </div>
+            <div class="stat-box">
+              <span class="box-label">MNZ</span>
+              <span class="box-val" id="diag-range">1</span>
+            </div>
+            <div class="stat-box">
+              <span class="box-label">HRK</span>
+              <span class="box-val" id="diag-mov">3</span>
+            </div>
+            <div class="stat-box glow-ap">
+              <span class="box-label">EP</span>
+              <span class="box-val" id="diag-ap">2/2</span>
+            </div>
+          </div>
+        </div>
+        <div class="diagnostic-instructions">
+          <p id="diag-instructions-text">Eylem gerçekleştirmek için vurgulanmış bir kareye tıklayın.</p>
+        </div>
+      </div>
+
+      <!-- Right Panel (Tactical Log) -->
+      <div class="hud-right-panel hud-panel">
+        <div class="panel-header">SAVAŞ GÜNLÜĞÜ</div>
+        <div class="log-messages" id="combat-log">
+          <div class="log-entry system-msg">Taktik bağlantı kuruldu. Savaş alanına hoş geldiniz.</div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar (Actions & Instructions) -->
+      <div class="hud-bottom-bar">
+        <div class="instructions-panel hud-panel">
+          <span class="shortcut">SOL TIK</span> Birlik Seç / Hedef Kare &nbsp;|&nbsp;
+          <span class="shortcut">SAĞ SÜRÜKLE</span> Kamerayı Döndür &nbsp;|&nbsp;
+          <span class="shortcut">FARE TEKERLEĞİ</span> Yakınlaştır
+        </div>
+        <button id="end-turn-btn" class="cyber-btn cyber-btn-accent" disabled>
+          <span class="btn-text">TURU BİTİR</span>
+          <span class="btn-glitch"></span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GAME OVER OVERLAY -->
+  <div id="game-over-screen" class="screen">
+    <div class="lobby-card text-center">
+      <h1 class="glitch-title" id="game-over-title" data-text="ZAFER">ZAFER</h1>
+      <p class="desc" id="game-over-desc">Tüm düşman kuvvetleri etkisiz hale getirildi.</p>
+      <button id="return-lobby-btn" class="cyber-btn cyber-btn-primary mt-4">
+        <span class="btn-text">LOBİYE DÖN</span>
+        <span class="btn-glitch"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ERROR POPUP TOAST -->
+  <div id="error-toast" class="error-toast">
+    <span class="error-icon">!</span>
+    <span id="error-toast-text" class="error-message">Bir hata oluştu.</span>
+  </div>
+
+  <!-- Load Scripts -->
+  <!-- Socket.io -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- OrbitControls CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Game Client JS -->
+  <script src="app.js"></script>
+</body>
+</html>
