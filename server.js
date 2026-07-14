@@ -104,6 +104,25 @@ function createInitialUnits() {
   return units;
 }
 
+// ── Saldırı Sonucu Hesaplayıcı (Crit & Dodge) ─────────────────────────────
+function calculateAttackResults(attacker, target) {
+  // %8 savuşturma şansı
+  const isDodge = Math.random() < 0.08;
+  if (isDodge) {
+    return { damage: 0, isCrit: false, isDodge: true };
+  }
+  
+  // %12 kritik vuruş şansı
+  const isCrit = Math.random() < 0.12;
+  const variance = 0.85 + Math.random() * 0.3;
+  let damage = Math.max(1, Math.round(attacker.atk * variance));
+  if (isCrit) {
+    damage = Math.round(damage * 2.0);
+  }
+  
+  return { damage, isCrit, isDodge: false };
+}
+
 // ── Tur geçiş yardımcısı ─────────────────────────────────────────────────
 // Hamle veya saldırı sonrası otomatik olarak çağrılır.
 function doEndTurn(room, io, roomCode) {
@@ -193,8 +212,8 @@ function triggerAILogic(room, io) {
   } else if (decision.type === 'attack') {
     unit.ap = 0; 
 
-    const variance = 0.85 + Math.random() * 0.3;
-    const damage = Math.max(1, Math.round(unit.atk * variance));
+    // Hasar, kritik vuruş ve savuşturma durumunu hesapla
+    const { damage, isCrit, isDodge } = calculateAttackResults(unit, target);
     target.hp -= damage;
 
     const targetDead = target.hp <= 0;
@@ -213,6 +232,8 @@ function triggerAILogic(room, io) {
       damage,
       targetHp: target.hp,
       targetDead,
+      isCrit,
+      isDodge,
       gameState
     });
 
@@ -596,9 +617,8 @@ io.on('connection', (socket) => {
     // Attack logic
     attacker.ap -= 1;
 
-    // Calculate damage: basic attack with random variance (85% to 115%)
-    const variance = 0.85 + Math.random() * 0.3;
-    const damage = Math.max(1, Math.round(attacker.atk * variance));
+    // Hasar, kritik vuruş ve savuşturma durumunu hesapla
+    const { damage, isCrit, isDodge } = calculateAttackResults(attacker, target);
     target.hp -= damage;
 
     const targetDead = target.hp <= 0;
@@ -622,6 +642,8 @@ io.on('connection', (socket) => {
       damage,
       targetHp: target.hp,
       targetDead,
+      isCrit,
+      isDodge,
       gameState
     });
 

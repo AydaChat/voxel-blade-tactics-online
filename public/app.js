@@ -164,6 +164,61 @@ function playSound(type) {
       osc1.stop(now + 0.25);
       osc2.stop(now + 0.25);
     }
+    else if (type === 'dodge') {
+      // Wind whoosh sound using white noise and bandpass filter
+      const bufferSize = audioCtx.sampleRate * 0.22;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'peaking';
+      filter.frequency.setValueAtTime(1400, now);
+      filter.frequency.exponentialRampToValueAtTime(320, now + 0.22);
+      filter.Q.setValueAtTime(8, now);
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.22);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      noise.start(now);
+      noise.stop(now + 0.22);
+    }
+    else if (type === 'crit') {
+      // High-pitched chime + metal slam impact
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(1200, now);
+      osc1.frequency.exponentialRampToValueAtTime(3200, now + 0.15);
+
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(988, now); // B5
+
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.32);
+      osc2.stop(now + 0.32);
+
+      playSound('hit');
+    }
     else if (type === 'error') {
       // Low buzz tone
       const osc1 = audioCtx.createOscillator();
@@ -194,6 +249,15 @@ function playSound(type) {
 
 // Game State variables
 let myTeam = null;           // 'blue' or 'red'
+
+// Cinematic camera variables
+let cameraTargetPosition = new THREE.Vector3();
+let cameraTargetLookAt = new THREE.Vector3();
+let cameraDefaultPosition = new THREE.Vector3();
+let controlsDefaultTarget = new THREE.Vector3(0, 0, 0);
+let isCinematicActive = false;
+let cinematicTimer = 0;
+let cameraShakeIntensity = 0;
 let myUsername = '';         // Confirmed username
 let opponentUsername = '';   // Opponent's username
 let currentRoomCode = null;
@@ -496,7 +560,7 @@ socket.on('unitMoved', ({ unitId, oldX, oldZ, newX, newZ, apRemaining, gameState
   clearHighlights();
 });
 
-socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead, gameState }) => {
+socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead, isCrit, isDodge, gameState }) => {
   unitsData = gameState.units;
   const attacker = gameState.units.find(u => u.id === attackerId) || unitsData.find(u => u.id === attackerId);
   const target = unitMeshes[targetId];
@@ -510,19 +574,55 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
     const targetName = target.userData.name;
     const attackerName = attackerMesh.userData.name;
 
+    // 🎥 Dynamic Action Camera Zoom-In & Focus
+    const attPos = attackerMesh.position;
+    const tgtPos = target.position;
+    const midPoint = new THREE.Vector3().addVectors(attPos, tgtPos).multiplyScalar(0.5);
+    cameraTargetPosition.copy(midPoint).add(new THREE.Vector3(0, 3.2, myTeam === 'blue' ? -3.5 : 3.5));
+    cameraTargetLookAt.copy(midPoint);
+    cinematicTimer = targetDead ? 1.4 : 0.85; // Odakta kalma süresi
+    isCinematicActive = true;
+
     // Hasar verme, parlama ve ölüm işlemlerini yapacak olan fonksiyon
     const triggerHitProcess = () => {
-      // 1. Darbe Flashing & Recoil
+      if (isDodge) {
+        // 💨 SAVUŞTURMA (Dodge) Animasyonu & Sesi
+        playSound('dodge');
+        
+        // Target slips to side (dodge dodge animation)
+        const lungeDir = new THREE.Vector3(targetX - attackerX, 0, targetZ - attackerZ).normalize();
+        // Get perpendicular vector for side dodge
+        const dodgeDir = new THREE.Vector3(-lungeDir.z, 0, lungeDir.x).multiplyScalar(0.4);
+        
+        target.userData.dodgeAnim = {
+          dir: dodgeDir,
+          time: 0.35,
+          elapsed: 0
+        };
+
+        addLog(`SAVUŞTURULDU! ${targetName} çevik bir hareketle saldırıdan sıyrıldı.`, 'system');
+        return;
+      }
+
+      // 🛡️ Darbe Flashing & Recoil
       target.userData.hitFlashTime = 0.35;
-      playSound('hit');
+      
+      if (isCrit) {
+        // 🔥 KRİTİK VURUŞ (Critical Hit)
+        playSound('crit');
+        cameraShakeIntensity = 0.55; // Camera shake!
+        
+        // Spawn massive golden spark particles
+        spawnDebris(targetX, targetZ, 'gold');
+        addLog(`KRİTİK DARBE! ${attackerName}, ${targetName} birliğine ${damage} kritik hasar verdi!`, 'kill');
+      } else {
+        // Normal Darbe
+        playSound('hit');
+        spawnDebris(targetX, targetZ, target.userData.team);
+        addLog(`${attackerName}, ${targetName} birliğine ${damage} hasar verdi!`, 'damage');
+      }
 
-      // 2. Darbe Voxel Debris
-      spawnDebris(targetX, targetZ, target.userData.team);
-
-      // Log hasar
-      addLog(`${attackerName}, ${targetName} birliğine ${damage} hasar verdi!`, 'damage');
-
-      // 3. Ölüm durumunu yönet
+      // 💀 Ölüm durumunu yönet
       if (targetDead) {
         setTimeout(() => {
           addLog(`${targetName} etkisiz hale getirildi!`, 'kill');
@@ -554,15 +654,10 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
     const isRanged = ['Archer', 'Mage', 'Catapult'].includes(attackerMesh.userData.type);
 
     if (isRanged) {
-      // Saldırı sesi çal
       playSound('attack');
-
-      // Mermiyi tetikle, menzilli mermi hedefe vardığında hasar alma süreci başlar
       spawnProjectile(attackerMesh.userData.type, attackerMesh.userData.team, attackerX, attackerZ, targetX, targetZ, triggerHitProcess);
     } else {
-      // Yakın dövüş birimi -> Lunge animasyonunu tetikle
       playSound('attack');
-
       attackerMesh.userData.lungeTime = 0.4;
       attackerMesh.userData.lungeDirection = new THREE.Vector3(
         targetX - attackerX,
@@ -570,7 +665,6 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
         targetZ - attackerZ
       ).normalize();
 
-      // Atılma animasyonunun ortasında hedefe çarpar
       setTimeout(triggerHitProcess, 200);
     }
   }
@@ -722,6 +816,12 @@ function initThreeJS() {
   window.addEventListener('resize', onWindowResize);
   renderer.domElement.addEventListener('mousemove', onMouseMove);
   renderer.domElement.addEventListener('click', onClick);
+
+  // Save default position after setting up
+  setTimeout(() => {
+    cameraDefaultPosition.copy(camera.position);
+    controlsDefaultTarget.copy(controls.target);
+  }, 100);
 
   // Start Animation Loop
   animate();
@@ -1385,17 +1485,19 @@ function createVoxelUnit(type, team) {
 
 // Spawn exploding voxel particles
 function spawnDebris(gridX, gridZ, team) {
-  const color = team === 'blue' ? 0x00f0ff : 0xff0055;
-  const count = 15 + Math.floor(Math.random() * 8);
+  let color = team === 'blue' ? 0x00f0ff : 0xff0055;
+  if (team === 'gold') color = 0xffd700; // Gold spark color for critical hits
+
+  const count = team === 'gold' ? 32 + Math.floor(Math.random() * 12) : 15 + Math.floor(Math.random() * 8);
 
   for (let i = 0; i < count; i++) {
     const geo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
     const mat = new THREE.MeshStandardMaterial({
       color: color,
       emissive: color,
-      emissiveIntensity: 0.4,
+      emissiveIntensity: team === 'gold' ? 1.5 : 0.4,
       roughness: 0.5,
-      metalness: 0.1
+      metalness: team === 'gold' ? 0.9 : 0.1
     });
 
     const mesh = new THREE.Mesh(geo, mat);
@@ -1412,10 +1514,10 @@ function spawnDebris(gridX, gridZ, team) {
 
     debrisList.push({
       mesh,
-      vx: (Math.random() - 0.5) * 4.5,
-      vy: Math.random() * 4.5 + 3.0, // Burst up
-      vz: (Math.random() - 0.5) * 4.5,
-      life: 0.9 + Math.random() * 0.4
+      vx: (Math.random() - 0.5) * (team === 'gold' ? 7.0 : 4.5),
+      vy: Math.random() * (team === 'gold' ? 7.0 : 4.5) + (team === 'gold' ? 4.5 : 3.0), // Burst up higher if gold
+      vz: (Math.random() - 0.5) * (team === 'gold' ? 7.0 : 4.5),
+      life: (team === 'gold' ? 1.2 : 0.9) + Math.random() * 0.4
     });
   }
 }
@@ -2145,6 +2247,23 @@ function animate() {
       }
     }
 
+    // --- CASE E: Savuşturma Kaçınma Animasyonu (Dodge) ---
+    else if (mesh.userData.dodgeAnim) {
+      const anim = mesh.userData.dodgeAnim;
+      anim.elapsed += dt;
+      const progress = Math.min(1.0, anim.elapsed / anim.time);
+      
+      const slideOffset = Math.sin(progress * Math.PI) * 0.8;
+      mesh.position.x = (mesh.userData.gridX - 5.5) + anim.dir.x * slideOffset;
+      mesh.position.z = (mesh.userData.gridZ - 5.5) + anim.dir.z * slideOffset;
+
+      if (progress >= 1.0) {
+        mesh.position.x = mesh.userData.gridX - 5.5;
+        mesh.position.z = mesh.userData.gridZ - 5.5;
+        mesh.userData.dodgeAnim = null;
+      }
+    }
+
     // --- CASE D: Bekleme Durumu (Idle Breathing & Unit Features) ---
     else {
       // Gentle breathing scale and height bobbing
@@ -2211,7 +2330,29 @@ function animate() {
     }
   }
 
-  // ── 4. RENDER CALLS ───────────────────────────────────────────────────
+  // ── 4. CINEMATIC CAMERA SYSTEM ────────────────────────────────────────
+  if (isCinematicActive && camera && controls) {
+    cinematicTimer -= dt;
+    camera.position.lerp(cameraTargetPosition, dt * 6.0);
+    controls.target.lerp(cameraTargetLookAt, dt * 6.0);
+
+    if (cinematicTimer <= 0) {
+      isCinematicActive = false;
+    }
+  } else if (camera && controls && cameraDefaultPosition.lengthSq() > 0) {
+    camera.position.lerp(cameraDefaultPosition, dt * 3.5);
+    controls.target.lerp(controlsDefaultTarget, dt * 3.5);
+  }
+
+  // Camera shake calculation (crit hit)
+  if (cameraShakeIntensity > 0 && camera) {
+    cameraShakeIntensity -= dt * 2.5;
+    const shake = Math.max(0, cameraShakeIntensity);
+    camera.position.x += (Math.random() - 0.5) * shake * 0.45;
+    camera.position.y += (Math.random() - 0.5) * shake * 0.45;
+  }
+
+  // ── 5. RENDER CALLS ───────────────────────────────────────────────────
   if (controls) controls.update();
   if (renderer && scene && camera) renderer.render(scene, camera);
 }
