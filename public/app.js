@@ -209,6 +209,7 @@ const unitMeshes = {}; // Key: unitId, Value: THREE.Group
 let highlightPlanes = []; // Holds range indicator meshes (green/red)
 let hoverHighlightMesh; // Wireframe outline for hover
 const debrisList = []; // Particle effects list
+let projectiles = []; // Menzilli mermi ve büyü efektleri listesi
 
 // Raycasting & Mouse Interaction
 const raycaster = new THREE.Raycaster();
@@ -460,87 +461,99 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
   unitsData = gameState.units;
   const attacker = gameState.units.find(u => u.id === attackerId) || unitsData.find(u => u.id === attackerId);
   const target = unitMeshes[targetId];
-
   const attackerMesh = unitMeshes[attackerId];
   
   if (attackerMesh && target) {
-    const atkData = unitsData.find(u => u.id === attackerId);
-    
-    // Play attack swish SFX
-    playSound('attack');
-
-    // 1. Attack Lunge Animation
     const targetX = target.userData.gridX;
     const targetZ = target.userData.gridZ;
-    attackerMesh.userData.lungeTime = 0.4;
-    attackerMesh.userData.lungeDirection = new THREE.Vector3(
-      targetX - attackerMesh.userData.gridX,
-      0,
-      targetZ - attackerMesh.userData.gridZ
-    ).normalize();
-
-    // 2. Hit reaction flashing & recoil
-    setTimeout(() => {
-      target.userData.hitFlashTime = 0.35;
-      playSound('hit');
-    }, 150);
-
+    const attackerX = attackerMesh.userData.gridX;
+    const attackerZ = attackerMesh.userData.gridZ;
     const targetName = target.userData.name;
     const attackerName = attackerMesh.userData.name;
-    addLog(`${attackerName}, ${targetName} birliğine ${damage} hasar verdi!`, 'damage');
 
-    // 3. Spawning voxel damage debris
-    setTimeout(() => {
+    // Hasar verme, parlama ve ölüm işlemlerini yapacak olan fonksiyon
+    const triggerHitProcess = () => {
+      // 1. Darbe Flashing & Recoil
+      target.userData.hitFlashTime = 0.35;
+      playSound('hit');
+
+      // 2. Darbe Voxel Debris
       spawnDebris(targetX, targetZ, target.userData.team);
-    }, 150);
 
-    // 4. Handle unit death
-    if (targetDead) {
-      setTimeout(() => {
-        addLog(`${targetName} etkisiz hale getirildi!`, 'kill');
-        playSound('death');
-        scene.remove(target);
-        
-        // Cleanup geometries and materials
-        target.traverse(child => {
-          if (child.isMesh) {
-            child.geometry.dispose();
-            child.material.dispose();
+      // Log hasar
+      addLog(`${attackerName}, ${targetName} birliğine ${damage} hasar verdi!`, 'damage');
+
+      // 3. Ölüm durumunu yönet
+      if (targetDead) {
+        setTimeout(() => {
+          addLog(`${targetName} etkisiz hale getirildi!`, 'kill');
+          playSound('death');
+          
+          // Özel ölüm efekti
+          spawnDeathEffect(target.userData.type, targetX, targetZ, target.userData.team);
+
+          // Scene'den kaldır
+          scene.remove(target);
+          target.traverse(child => {
+            if (child.isMesh) {
+              child.geometry.dispose();
+              child.material.dispose();
+            }
+          });
+          delete unitMeshes[targetId];
+
+          // Seçili birim öldüyse kaldır
+          if (selectedUnitId === targetId) {
+            selectedUnitId = null;
+            unitDiagnostic.classList.add('hidden');
           }
-        });
-        delete unitMeshes[targetId];
+        }, 150);
+      }
+    };
 
-        // Deselect if dead unit was selected
-        if (selectedUnitId === targetId) {
-          selectedUnitId = null;
-          unitDiagnostic.classList.add('hidden');
-        }
-      }, 350);
+    // Saldırganın türü menzilli ise
+    const isRanged = ['Archer', 'Mage', 'Catapult'].includes(attackerMesh.userData.type);
+
+    if (isRanged) {
+      // Saldırı sesi çal
+      playSound('attack');
+
+      // Mermiyi tetikle, menzilli mermi hedefe vardığında hasar alma süreci başlar
+      spawnProjectile(attackerMesh.userData.type, attackerMesh.userData.team, attackerX, attackerZ, targetX, targetZ, triggerHitProcess);
+    } else {
+      // Yakın dövüş birimi -> Lunge animasyonunu tetikle
+      playSound('attack');
+
+      attackerMesh.userData.lungeTime = 0.4;
+      attackerMesh.userData.lungeDirection = new THREE.Vector3(
+        targetX - attackerX,
+        0,
+        targetZ - attackerZ
+      ).normalize();
+
+      // Atılma animasyonunun ortasında hedefe çarpar
+      setTimeout(triggerHitProcess, 200);
     }
   }
 
-  // Clear selection overlays
+  // Arayüzü temizle
   clearHighlights();
 
-  // Redraw diagnostics — attacker AP değişti, ve hedef can güncellemesi
+  // Diagnostics paneli hasardan sonra güncelle (biraz gecikmeli)
   setTimeout(() => {
-    // Saldıranın panelini güncelle
     if (selectedUnitId === attackerId) {
       const attUnit = unitsData.find(u => u.id === attackerId);
       if (attUnit) updateDiagnosticPanel(attUnit);
     }
-    // Hedef seçiliyse ve hayattaysa panelini güncelle
     if (selectedUnitId === targetId && !targetDead) {
-      // targetHp sunucudan geldi, unitsData'da güncel
       const tgtUnit = unitsData.find(u => u.id === targetId);
       if (tgtUnit) updateDiagnosticPanel(tgtUnit);
     }
-    // Hiçbiri seçili değilse de genel güncelleme
     if (selectedUnitId && selectedUnitId !== attackerId && selectedUnitId !== targetId) {
       const selUnit = unitsData.find(u => u.id === selectedUnitId);
       if (selUnit) updateDiagnosticPanel(selUnit);
     }
-  }, 420);
+  }, 500);
 });
 
 socket.on('turnEnded', ({ activeTeam: nextTeam, turn, gameState }) => {
@@ -852,11 +865,13 @@ function createVoxelUnit(type, team) {
     const legL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.12), tunicMat);
     legL.position.set(-0.14, 0.11, 0);
     legL.castShadow = true;
+    legL.name = "legL";
     group.add(legL);
 
     const legR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.12), tunicMat);
     legR.position.set(0.14, 0.11, 0);
     legR.castShadow = true;
+    legR.name = "legR";
     group.add(legR);
 
     // Torso
@@ -927,11 +942,13 @@ function createVoxelUnit(type, team) {
     const legL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), tunicMat);
     legL.position.set(-0.12, 0.1, 0);
     legL.castShadow = true;
+    legL.name = "legL";
     group.add(legL);
 
     const legR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), tunicMat);
     legR.position.set(0.12, 0.1, 0);
     legR.castShadow = true;
+    legR.name = "legR";
     group.add(legR);
 
     // Torso
@@ -1031,6 +1048,7 @@ function createVoxelUnit(type, team) {
     const hHead = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.34), horseMat);
     hHead.position.set(0, 0.68, 0.4);
     hHead.castShadow = true;
+    hHead.name = "horseHead";
     horseGroup.add(hHead);
 
     // Mane
@@ -1109,9 +1127,11 @@ function createVoxelUnit(type, team) {
     // Ağır Muhafız — geniş gövde, omuz zırhı, kule kalkan
     const helmetMat2 = new THREE.MeshStandardMaterial({ color: 0x5a6a78, roughness: 0.2, metalness: 0.9 });
     // Bacaklar (kalın)
-    [-0.16, 0.16].forEach(lx => {
+    [-0.16, 0.16].forEach((lx, idx) => {
       const leg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.18), steelMat);
-      leg.position.set(lx, 0.12, 0); leg.castShadow = true; group.add(leg);
+      leg.position.set(lx, 0.12, 0); leg.castShadow = true; 
+      leg.name = idx === 0 ? "legL" : "legR";
+      group.add(leg);
     });
     // Gövde (çok geniş)
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.46, 0.32), steelMat);
@@ -1148,9 +1168,11 @@ function createVoxelUnit(type, team) {
     const plateMat = new THREE.MeshStandardMaterial({ color: 0xccd9e8, roughness: 0.15, metalness: 0.95 });
     const plumeMat2 = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0xffd700 : 0xff6600, emissive: 0x332200, emissiveIntensity: 0.3 });
     // Bacaklar
-    [-0.14, 0.14].forEach(lx => {
+    [-0.14, 0.14].forEach((lx, idx) => {
       const leg = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.22, 0.14), plateMat);
-      leg.position.set(lx, 0.11, 0); leg.castShadow = true; group.add(leg);
+      leg.position.set(lx, 0.11, 0); leg.castShadow = true;
+      leg.name = idx === 0 ? "legL" : "legR";
+      group.add(leg);
     });
     // Gövde (daha büyük)
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.46, 0.28), plateMat);
@@ -1206,9 +1228,11 @@ function createVoxelUnit(type, team) {
     const stone = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.95 }));
     stone.position.set(0, 1.0, 0.3); group.add(stone);
     // Tekerlekler
-    [[-0.36, -0.18], [-0.36, 0.18], [0.36, -0.18], [0.36, 0.18]].forEach(([wx, wz]) => {
+    [[-0.36, -0.18], [-0.36, 0.18], [0.36, -0.18], [0.36, 0.18]].forEach(([wx, wz], idx) => {
       const wheel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.18, 0.18), darkWood);
-      wheel.position.set(wx, 0.09, wz); group.add(wheel);
+      wheel.position.set(wx, 0.09, wz); 
+      wheel.name = "wheel_" + idx;
+      group.add(wheel);
       const axle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), steelBolt);
       axle.position.set(wx, 0.09, wz); group.add(axle);
     });
@@ -1222,9 +1246,11 @@ function createVoxelUnit(type, team) {
     const helmetMat3 = new THREE.MeshStandardMaterial({ color: helmetColor, roughness: 0.3, metalness: 0.7 });
     const capeMat = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x003399 : 0x880011, roughness: 0.7 });
     // Bacaklar
-    [-0.13, 0.13].forEach(lx => {
+    [-0.13, 0.13].forEach((lx, idx) => {
       const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.12), tunicMat);
-      leg.position.set(lx, 0.11, 0); leg.castShadow = true; group.add(leg);
+      leg.position.set(lx, 0.11, 0); leg.castShadow = true;
+      leg.name = idx === 0 ? "legL" : "legR";
+      group.add(leg);
     });
     // Pelerin (arkada)
     const cape = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.06), capeMat);
@@ -1292,14 +1318,24 @@ function createVoxelUnit(type, team) {
     staffShaft.position.set(0.28, 0.44, 0.08); group.add(staffShaft);
     // Kristal küre (asa ucu)
     const orb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), crystalMat);
-    orb.position.set(0.28, 0.92, 0.08); group.add(orb);
+    orb.position.set(0.28, 0.92, 0.08); 
+    orb.name = "mageOrb";
+    group.add(orb);
     const orbGlow = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), new THREE.MeshStandardMaterial({
       color: team === 'blue' ? 0x00f0ff : 0xff3300,
       emissive: team === 'blue' ? 0x00a0cc : 0xcc1100,
       emissiveIntensity: 0.6,
       transparent: true, opacity: 0.3
     }));
-    orbGlow.position.set(0.28, 0.92, 0.08); group.add(orbGlow);
+    orbGlow.position.set(0.28, 0.92, 0.08); 
+    orbGlow.name = "mageOrbGlow";
+    group.add(orbGlow);
+
+    // Mistik PointLight parıltısı
+    const staffLight = new THREE.PointLight(team === 'blue' ? 0x00f0ff : 0xff3300, 1.0, 3.5);
+    staffLight.position.set(0.28, 0.92, 0.08);
+    staffLight.name = "staffLight";
+    group.add(staffLight);
   }
 
   // Set unit standing on the grid (y = 0 so they align perfectly on ground)
@@ -1342,6 +1378,252 @@ function spawnDebris(gridX, gridZ, team) {
       vz: (Math.random() - 0.5) * 4.5,
       life: 0.9 + Math.random() * 0.4
     });
+  }
+}
+
+// Spawn projectile based on attacker type (Mage / Archer / Catapult)
+function spawnProjectile(attackerType, team, startX, startZ, targetX, targetZ, onHit) {
+  const group = new THREE.Group();
+  let material, geometry;
+  let arc = 0;
+  let duration = 0.55; 
+
+  const color = team === 'blue' ? 0x00f0ff : 0xff0055;
+
+  if (attackerType === 'Archer') {
+    // Arrow projectile
+    geometry = new THREE.BoxGeometry(0.04, 0.04, 0.28);
+    material = new THREE.MeshStandardMaterial({ color: 0xa66f3c, roughness: 0.8 });
+    const arrow = new THREE.Mesh(geometry, material);
+    arrow.castShadow = true;
+    group.add(arrow);
+    
+    // Arrow tip
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.08), new THREE.MeshStandardMaterial({ color: 0xccd9e8, metalness: 0.8 }));
+    tip.position.z = 0.16;
+    group.add(tip);
+
+    arc = 0.8; 
+    duration = 0.5;
+  } else if (attackerType === 'Mage') {
+    // Magic plasma sphere
+    geometry = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+    material = new THREE.MeshStandardMaterial({ 
+      color: color, 
+      emissive: color, 
+      emissiveIntensity: 1.2,
+      transparent: true,
+      opacity: 0.85
+    });
+    const plasma = new THREE.Mesh(geometry, material);
+    group.add(plasma);
+
+    // Glowing core pointlight
+    const projLight = new THREE.PointLight(color, 1.2, 3.0);
+    projLight.name = "projLight";
+    group.add(projLight);
+
+    arc = 0.25; 
+    duration = 0.65;
+  } else if (attackerType === 'Catapult') {
+    // Catapult boulder projectile
+    geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    material = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.9 });
+    const boulder = new THREE.Mesh(geometry, material);
+    boulder.castShadow = true;
+    group.add(boulder);
+
+    arc = 2.2; 
+    duration = 1.0;
+  }
+
+  // Setup start position (world coordinates)
+  group.position.set(startX - 5.5, 0.45, startZ - 5.5);
+  
+  // Point projectile towards target
+  const dx = targetX - startX;
+  const dz = targetZ - startZ;
+  group.rotation.y = Math.atan2(dx, dz);
+
+  scene.add(group);
+
+  projectiles.push({
+    mesh: group,
+    startX: startX - 5.5,
+    startY: 0.45,
+    startZ: startZ - 5.5,
+    targetX: targetX - 5.5,
+    targetY: 0.2, 
+    targetZ: targetZ - 5.5,
+    elapsed: 0,
+    duration,
+    arc,
+    onHit
+  });
+}
+
+// Spawn unit-specific death visual effect
+function spawnDeathEffect(unitType, gridX, gridZ, team) {
+  const color = team === 'blue' ? 0x00f0ff : 0xff0055;
+  
+  if (unitType === 'Mage') {
+    // Magic ring particle explosion
+    const particleCount = 28;
+    for (let i = 0; i < particleCount; i++) {
+      const geo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+      const mat = new THREE.MeshStandardMaterial({
+        color: team === 'blue' ? 0x8800ff : 0xff0055,
+        emissive: team === 'blue' ? 0x5500aa : 0xaa0033,
+        emissiveIntensity: 1.5,
+        transparent: true
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(gridX - 5.5, 0.3, gridZ - 5.5);
+      scene.add(mesh);
+
+      const angle = (i / particleCount) * Math.PI * 2.0;
+      const speed = 2.0 + Math.random() * 2.5;
+      debrisList.push({
+        mesh,
+        vx: Math.cos(angle) * speed,
+        vy: 2.0 + Math.random() * 3.5, 
+        vz: Math.sin(angle) * speed,
+        life: 1.2 + Math.random() * 0.4
+      });
+    }
+    // Fade away PointLight
+    const deathLight = new THREE.PointLight(team === 'blue' ? 0x8800ff : 0xff0055, 2.0, 5.0);
+    deathLight.position.set(gridX - 5.5, 0.4, gridZ - 5.5);
+    scene.add(deathLight);
+    
+    const fade = () => {
+      deathLight.intensity -= 0.15;
+      if (deathLight.intensity > 0) {
+        requestAnimationFrame(fade);
+      } else {
+        scene.remove(deathLight);
+      }
+    };
+    fade();
+
+  } else if (unitType === 'Catapult') {
+    // Splintered wood and dark smoke particles
+    const particleCount = 24;
+    for (let i = 0; i < particleCount; i++) {
+      const isWood = Math.random() > 0.4;
+      const geo = new THREE.BoxGeometry(
+        isWood ? 0.06 + Math.random() * 0.18 : 0.08, 
+        0.08, 
+        0.08
+      );
+      const pColor = isWood ? 0x4a2e10 : 0x333333;
+      const mat = new THREE.MeshStandardMaterial({
+        color: pColor,
+        roughness: 0.95
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(gridX - 5.5, 0.2 + Math.random() * 0.3, gridZ - 5.5);
+      scene.add(mesh);
+
+      debrisList.push({
+        mesh,
+        vx: (Math.random() - 0.5) * 4.0,
+        vy: Math.random() * 3.0 + 1.5,
+        vz: (Math.random() - 0.5) * 4.0,
+        life: 0.8 + Math.random() * 0.5
+      });
+    }
+  } else if (unitType === 'HeavyGuard') {
+    // Metal armor splinters & sparks
+    const particleCount = 30;
+    for (let i = 0; i < particleCount; i++) {
+      const isSpark = Math.random() > 0.6;
+      const geo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+      const mat = new THREE.MeshStandardMaterial({
+        color: isSpark ? 0xffaa00 : 0x738a9c,
+        emissive: isSpark ? 0xffaa00 : 0x000000,
+        emissiveIntensity: isSpark ? 1.0 : 0.0,
+        metalness: isSpark ? 0.0 : 0.9,
+        roughness: 0.3
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(gridX - 5.5, 0.3, gridZ - 5.5);
+      scene.add(mesh);
+
+      debrisList.push({
+        mesh,
+        vx: (Math.random() - 0.5) * 5.0,
+        vy: Math.random() * 4.5 + 2.5,
+        vz: (Math.random() - 0.5) * 5.0,
+        life: 0.7 + Math.random() * 0.4
+      });
+    }
+  } else if (unitType === 'Knight') {
+    // Holy yellow sparks explosion
+    const particleCount = 26;
+    for (let i = 0; i < particleCount; i++) {
+      const geo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: 0xffbb00,
+        emissiveIntensity: 1.2
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(gridX - 5.5, 0.25, gridZ - 5.5);
+      scene.add(mesh);
+
+      debrisList.push({
+        mesh,
+        vx: (Math.random() - 0.5) * 3.5,
+        vy: Math.random() * 5.0 + 3.0, 
+        vz: (Math.random() - 0.5) * 3.5,
+        life: 1.0 + Math.random() * 0.3
+      });
+    }
+  } else if (unitType === 'Cavalry') {
+    // Horseshoe and horse pelt fragments
+    const particleCount = 25;
+    for (let i = 0; i < particleCount; i++) {
+      const isHorse = Math.random() > 0.5;
+      const geo = new THREE.BoxGeometry(0.11, 0.11, 0.11);
+      const mat = new THREE.MeshStandardMaterial({
+        color: isHorse ? 0x7c533c : color,
+        roughness: 0.6
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(gridX - 5.5, 0.35, gridZ - 5.5);
+      scene.add(mesh);
+
+      debrisList.push({
+        mesh,
+        vx: (Math.random() - 0.5) * 5.5,
+        vy: Math.random() * 3.5 + 2.0,
+        vz: (Math.random() - 0.5) * 5.5,
+        life: 0.9 + Math.random() * 0.3
+      });
+    }
+  } else {
+    // Normal voxel explosion
+    const particleCount = 20;
+    for (let i = 0; i < particleCount; i++) {
+      const geo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+      const mat = new THREE.MeshStandardMaterial({
+        color: color,
+        emissive: color,
+        emissiveIntensity: 0.5
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(gridX - 5.5, 0.3, gridZ - 5.5);
+      scene.add(mesh);
+
+      debrisList.push({
+        mesh,
+        vx: (Math.random() - 0.5) * 4.5,
+        vy: Math.random() * 4.0 + 2.0,
+        vz: (Math.random() - 0.5) * 4.5,
+        life: 0.8 + Math.random() * 0.3
+      });
+    }
   }
 }
 
@@ -1645,24 +1927,65 @@ function animate() {
   requestAnimationFrame(animate);
 
   const dt = clock.getDelta();
+  const time = Date.now();
 
-  // 1. Update Unit Animations (movement, damage flash, lunge)
+  // ── 1. UPDATE PROJECTILES (Arrow, Magic Ball, Boulder) ─────────────────
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const proj = projectiles[i];
+    proj.elapsed += dt;
+    const progress = Math.min(1.0, proj.elapsed / proj.duration);
+
+    // Parabolic trajectory calculation
+    const curX = proj.startX + (proj.targetX - proj.startX) * progress;
+    const curZ = proj.startZ + (proj.targetZ - proj.startZ) * progress;
+    
+    // Y height calculation based on arc
+    const arcHeight = Math.sin(progress * Math.PI) * proj.arc;
+    const curY = proj.startY + (proj.targetY - proj.startY) * progress + arcHeight;
+
+    proj.mesh.position.set(curX, curY, curZ);
+
+    // Roll rotation along axis
+    proj.mesh.rotation.x += dt * 8.0;
+    proj.mesh.rotation.z += dt * 3.0;
+
+    // Flicker projectile light if any
+    const light = proj.mesh.getObjectByName("projLight");
+    if (light) {
+      light.intensity = 1.0 + Math.sin(time * 0.035) * 0.4;
+    }
+
+    // Check hit point
+    if (progress >= 1.0) {
+      scene.remove(proj.mesh);
+      proj.mesh.traverse(child => {
+        if (child.isMesh) {
+          child.geometry.dispose();
+          child.material.dispose();
+        }
+      });
+      
+      // Execute impact process (hasar & particle explosion)
+      proj.onHit();
+      projectiles.splice(i, 1);
+    }
+  }
+
+  // ── 2. UPDATE UNIT ANIMATIONS (Movement, Lunge, Damage Flashing, Idle) ──
   for (const id in unitMeshes) {
     const mesh = unitMeshes[id];
 
-    // Handle Movement Lerping with professional bobbing, tilt & lean
+    // --- CASE A: Yürüyüş Animasyonu (Movement) ---
     if (mesh.userData.moveAnim) {
       const anim = mesh.userData.moveAnim;
       anim.elapsed += dt;
       const progress = Math.min(1.0, anim.elapsed / anim.time);
       
-      // Professional jumping curve (3 bounces during movement)
-      const bob = Math.abs(Math.sin(progress * Math.PI * 3.5)) * 0.35;
-      
-      // Rotational sway (waddle effect)
+      // 3 steps bounce/jumping during grid traversal
+      const bob = Math.abs(Math.sin(progress * Math.PI * 3.5)) * 0.32;
       const roll = Math.sin(progress * Math.PI * 6.0) * 0.12;
 
-      // Lerp position
+      // Position update
       const curX = anim.startX + (anim.targetX - anim.startX) * progress;
       const curZ = anim.startZ + (anim.targetZ - anim.startZ) * progress;
 
@@ -1670,41 +1993,61 @@ function animate() {
       mesh.position.z = curZ - 5.5;
       mesh.position.y = bob;
 
-      // Orient rotation along move direction + roll/waddle
+      // Align yaw direction to movement path
       const dx = anim.targetX - anim.startX;
       const dz = anim.targetZ - anim.startZ;
-      const moveAngle = Math.atan2(dx, dz);
-      mesh.rotation.y = moveAngle;
+      mesh.rotation.y = Math.atan2(dx, dz);
       mesh.rotation.z = roll;
+
+      // Realistically swing left/right legs
+      const legL = mesh.getObjectByName("legL");
+      const legR = mesh.getObjectByName("legR");
+      if (legL && legR) {
+        const swing = Math.sin(progress * Math.PI * 7.5) * 0.55;
+        legL.rotation.x = swing;
+        legR.rotation.x = -swing;
+      }
+
+      // Rotate Catapult wheels during movement
+      if (mesh.userData.type === 'Catapult') {
+        for (let w = 0; w < 4; w++) {
+          const wheel = mesh.getObjectByName("wheel_" + w);
+          if (wheel) wheel.rotation.x += dt * 9.0;
+        }
+      }
 
       if (progress >= 1.0) {
         mesh.position.y = 0;
         mesh.rotation.z = 0;
-        // Restore team orientation
         mesh.rotation.y = (mesh.userData.team === 'blue') ? 0 : Math.PI;
+        
+        // Reset leg rotations
+        if (legL && legR) {
+          legL.rotation.x = 0;
+          legR.rotation.x = 0;
+        }
         mesh.userData.moveAnim = null;
       }
     }
 
-    // Handle Attacker Lunge (Strike animation - jumps slightly and slams down)
-    if (mesh.userData.lungeTime > 0) {
+    // --- CASE B: Saldırı Animasyonu (Lunge) ---
+    else if (mesh.userData.lungeTime > 0) {
       mesh.userData.lungeTime -= dt;
       const progress = (0.4 - mesh.userData.lungeTime) / 0.4;
       const strikeDist = Math.sin(progress * Math.PI) * 0.75;
       const dir = mesh.userData.lungeDirection;
 
-      // Attacker jumps and lunges
       const lungeJump = Math.sin(progress * Math.PI) * 0.38;
       mesh.position.x = (mesh.userData.gridX - 5.5) + dir.x * strikeDist;
       mesh.position.z = (mesh.userData.gridZ - 5.5) + dir.z * strikeDist;
       mesh.position.y = lungeJump;
 
-      // Dynamic forward bend tilt
+      // Angle forward tilt based on attack vector
       const tilt = 0.55;
       mesh.rotation.x = dir.z * Math.sin(progress * Math.PI) * tilt;
       mesh.rotation.z = -dir.x * Math.sin(progress * Math.PI) * tilt;
 
-      // Flash weapon emissive at peak strike point
+      // Weapon flash at climax strike point
       if (progress > 0.4 && progress < 0.6) {
         mesh.traverse(child => {
           if (child.isMesh && child.material) {
@@ -1730,11 +2073,10 @@ function animate() {
       }
     }
 
-    // Handle Victim damage flash, shake, and recoil jump
-    if (mesh.userData.hitFlashTime > 0) {
+    // --- CASE C: Hasar Titreme ve Geri Savrulma (Hit Flashing) ---
+    else if (mesh.userData.hitFlashTime > 0) {
       mesh.userData.hitFlashTime -= dt;
-      
-      const flashColor = Math.sin(Date.now() * 0.05) > 0 ? 0xff0055 : 0xffffff;
+      const flashColor = Math.sin(time * 0.05) > 0 ? 0xff0055 : 0xffffff;
       
       mesh.traverse(child => {
         if (child.isMesh && child.material) {
@@ -1742,7 +2084,7 @@ function animate() {
         }
       });
 
-      // Recoil jump + shaking offset
+      // Recoil bounce and random jitter shake
       const bounceHeight = Math.sin((mesh.userData.hitFlashTime / 0.35) * Math.PI) * 0.45;
       const shakeX = (Math.random() - 0.5) * 0.16;
       const shakeZ = (Math.random() - 0.5) * 0.16;
@@ -1752,7 +2094,6 @@ function animate() {
       mesh.position.z = (mesh.userData.gridZ - 5.5) + shakeZ;
 
       if (mesh.userData.hitFlashTime <= 0) {
-        // Reset positioning and color state
         mesh.position.y = 0;
         mesh.position.x = mesh.userData.gridX - 5.5;
         mesh.position.z = mesh.userData.gridZ - 5.5;
@@ -1764,29 +2105,66 @@ function animate() {
         });
       }
     }
+
+    // --- CASE D: Bekleme Durumu (Idle Breathing & Unit Features) ---
+    else {
+      // Gentle breathing scale and height bobbing
+      const breathing = Math.sin(time * 0.0028 + (mesh.position.x * 1.5)) * 0.026;
+      mesh.position.y = breathing;
+
+      // Mage: staff light pulsing and orb rotating
+      if (mesh.userData.type === 'Mage') {
+        const orb = mesh.getObjectByName("mageOrb");
+        const orbGlow = mesh.getObjectByName("mageOrbGlow");
+        const staffLight = mesh.getObjectByName("staffLight");
+        
+        if (orb) {
+          orb.rotation.y += dt * 1.5;
+          orb.rotation.x += dt * 0.8;
+          orb.position.y = 0.92 + Math.sin(time * 0.003) * 0.04; // floating orb
+        }
+        if (orbGlow) {
+          const scale = 1.0 + Math.sin(time * 0.006) * 0.16;
+          orbGlow.scale.setScalar(scale);
+        }
+        if (staffLight) {
+          staffLight.intensity = 1.2 + Math.sin(time * 0.01) * 0.5;
+        }
+      }
+
+      // Cavalry: Horse head nodding
+      if (mesh.userData.type === 'Cavalry') {
+        const horseHead = mesh.getObjectByName("horseHead");
+        if (horseHead) {
+          horseHead.rotation.x = -Math.PI / 6 + Math.sin(time * 0.002) * 0.04;
+        }
+      }
+
+      // Archer: Idle weapon swing
+      if (mesh.userData.type === 'Archer') {
+        mesh.rotation.y = ((mesh.userData.team === 'blue') ? 0 : Math.PI) + Math.sin(time * 0.0015) * 0.035;
+      }
+    }
   }
 
-  // 2. Update Voxel Debris physics
+  // ── 3. UPDATE EXPLODING VOXEL PARTICLES (Debris) ──────────────────────
   for (let i = debrisList.length - 1; i >= 0; i--) {
     const p = debrisList[i];
     p.life -= dt;
     
-    // Physics movements
     p.mesh.position.x += p.vx * dt;
     p.mesh.position.y += p.vy * dt;
     p.mesh.position.z += p.vz * dt;
 
-    p.vy -= 9.8 * dt; // gravity deceleration
+    p.vy -= 9.8 * dt; // gravity
 
-    // Rotate particles
     p.mesh.rotation.x += p.vx * dt * 2.0;
     p.mesh.rotation.y += p.vy * dt * 2.0;
 
-    // Scale down near end of life
     const scale = Math.max(0, p.life);
-    p.mesh.scale.set(scale, scale, scale);
+    p.mesh.scale.setScalar(scale);
 
-    if (p.life <= 0 || p.mesh.position.y < -3) {
+    if (p.life <= 0 || p.mesh.position.y < -3.0) {
       scene.remove(p.mesh);
       p.mesh.geometry.dispose();
       p.mesh.material.dispose();
@@ -1794,7 +2172,7 @@ function animate() {
     }
   }
 
-  // 3. Rendering calls
+  // ── 4. RENDER CALLS ───────────────────────────────────────────────────
   if (controls) controls.update();
   if (renderer && scene && camera) renderer.render(scene, camera);
 }
