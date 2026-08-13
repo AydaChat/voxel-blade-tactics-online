@@ -26,54 +26,61 @@ function playSound(type) {
     const now = audioCtx.currentTime;
 
     if (type === 'select') {
-      // Short high-pitched beep
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, now);
-      osc.frequency.exponentialRampToValueAtTime(1100, now + 0.1);
-      
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
-      
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      
-      osc.start(now);
-      osc.stop(now + 0.12);
-    } 
-    else if (type === 'move') {
-      // Cyber movement hover beep
+      // Crisp metallic sword draw / coin clink
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(250, now);
-      osc.frequency.exponentialRampToValueAtTime(100, now + 0.12);
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(1760, now + 0.09);
       
-      gain.gain.setValueAtTime(0.08, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
       
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       
       osc.start(now);
-      osc.stop(now + 0.12);
+      osc.stop(now + 0.14);
+    } 
+    else if (type === 'move') {
+      // Heavy leather boot step on stone flagstone
+      const bufferSize = Math.floor(audioCtx.sampleRate * 0.12);
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(240, now);
+      filter.frequency.exponentialRampToValueAtTime(70, now + 0.12);
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      noise.start(now);
+      noise.stop(now + 0.12);
     } 
     else if (type === 'attack') {
-      // Slash/laser sweep
+      // Sharp steel sword slash & blade clash
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(700, now);
-      osc.frequency.exponentialRampToValueAtTime(180, now + 0.2);
+      osc.frequency.setValueAtTime(1100, now);
+      osc.frequency.exponentialRampToValueAtTime(240, now + 0.22);
       
       const filter = audioCtx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1800, now);
-      filter.frequency.exponentialRampToValueAtTime(400, now + 0.2);
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(800, now);
+      filter.frequency.exponentialRampToValueAtTime(200, now + 0.22);
 
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.22);
       
       osc.connect(filter);
       filter.connect(gain);
@@ -83,167 +90,138 @@ function playSound(type) {
       osc.stop(now + 0.22);
     } 
     else if (type === 'hit') {
-      // Noise impact metallic crash
-      const bufferSize = audioCtx.sampleRate * 0.15;
+      // Heavy oak shield bash / iron armor impact
+      const bufferSize = Math.floor(audioCtx.sampleRate * 0.18);
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
       
       const noise = audioCtx.createBufferSource();
       noise.buffer = buffer;
-      
       const filter = audioCtx.createBiquadFilter();
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(500, now);
-      filter.frequency.exponentialRampToValueAtTime(120, now + 0.15);
+      filter.frequency.setValueAtTime(450, now);
+      filter.frequency.exponentialRampToValueAtTime(90, now + 0.18);
       
       const gain = audioCtx.createGain();
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+      gain.gain.setValueAtTime(0.24, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.18);
       
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(audioCtx.destination);
-      
       noise.start(now);
-      noise.stop(now + 0.15);
+      noise.stop(now + 0.18);
     } 
     else if (type === 'death') {
-      // Deep explosion noise rumble
-      const bufferSize = audioCtx.sampleRate * 0.45;
+      // Stone crumble & armor shatter explosion
+      const bufferSize = Math.floor(audioCtx.sampleRate * 0.55);
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
       
       const noise = audioCtx.createBufferSource();
       noise.buffer = buffer;
-      
       const filter = audioCtx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(500, now);
-      filter.frequency.exponentialRampToValueAtTime(40, now + 0.45);
+      filter.frequency.setValueAtTime(650, now);
+      filter.frequency.exponentialRampToValueAtTime(30, now + 0.55);
       
       const gain = audioCtx.createGain();
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.45);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.55);
       
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(audioCtx.destination);
-      
       noise.start(now);
-      noise.stop(now + 0.45);
+      noise.stop(now + 0.55);
     } 
     else if (type === 'turn') {
-      // Two-tone chord sweep for turn change
-      const osc1 = audioCtx.createOscillator();
-      const osc2 = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(392, now); // G4
-      osc1.frequency.exponentialRampToValueAtTime(784, now + 0.2);
-      
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(494, now); // B4
-      osc2.frequency.exponentialRampToValueAtTime(988, now + 0.2);
+      // Royal heraldic brass trumpet fanfare chord (C5, E5, G5)
+      const freqs = [523.25, 659.25, 783.99];
+      freqs.forEach((f, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(f, now + idx * 0.04);
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1600, now);
 
-      gain.gain.setValueAtTime(0.1, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
-      
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(audioCtx.destination);
-      
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 0.25);
-      osc2.stop(now + 0.25);
+        gain.gain.setValueAtTime(0.08, now + idx * 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now + idx * 0.04);
+        osc.stop(now + 0.35);
+      });
     }
     else if (type === 'dodge') {
-      // Wind whoosh sound using white noise and bandpass filter
-      const bufferSize = audioCtx.sampleRate * 0.22;
+      // Swift cloaked evasion whoosh
+      const bufferSize = Math.floor(audioCtx.sampleRate * 0.22);
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
       const noise = audioCtx.createBufferSource();
       noise.buffer = buffer;
 
       const filter = audioCtx.createBiquadFilter();
       filter.type = 'peaking';
-      filter.frequency.setValueAtTime(1400, now);
-      filter.frequency.exponentialRampToValueAtTime(320, now + 0.22);
-      filter.Q.setValueAtTime(8, now);
+      filter.frequency.setValueAtTime(1500, now);
+      filter.frequency.exponentialRampToValueAtTime(300, now + 0.22);
+      filter.Q.setValueAtTime(6, now);
 
       const gain = audioCtx.createGain();
-      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.setValueAtTime(0.14, now);
       gain.gain.linearRampToValueAtTime(0.001, now + 0.22);
 
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(audioCtx.destination);
-
       noise.start(now);
       noise.stop(now + 0.22);
     }
     else if (type === 'crit') {
-      // High-pitched chime + metal slam impact
-      const osc1 = audioCtx.createOscillator();
-      const osc2 = audioCtx.createOscillator();
+      // Resonant blade cleave + roaring crowd burst
+      const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(1400, now);
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
 
-      osc1.type = 'triangle';
-      osc1.frequency.setValueAtTime(1200, now);
-      osc1.frequency.exponentialRampToValueAtTime(3200, now + 0.15);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
 
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(988, now); // B5
-
-      gain.gain.setValueAtTime(0.18, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
-
-      osc1.connect(gain);
-      osc2.connect(gain);
+      osc.connect(gain);
       gain.connect(audioCtx.destination);
-
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 0.32);
-      osc2.stop(now + 0.32);
+      osc.start(now);
+      osc.stop(now + 0.35);
 
       playSound('hit');
     }
     else if (type === 'error') {
-      // Low buzz tone
-      const osc1 = audioCtx.createOscillator();
-      const osc2 = audioCtx.createOscillator();
+      // Dull low wooden thud
+      const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      
-      osc1.type = 'sawtooth';
-      osc1.frequency.setValueAtTime(120, now);
-      osc2.type = 'sawtooth';
-      osc2.frequency.setValueAtTime(124, now);
-      
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
-      
-      osc1.connect(gain);
-      osc2.connect(gain);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(110, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.2);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+
+      osc.connect(gain);
       gain.connect(audioCtx.destination);
-      
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 0.22);
-      osc2.stop(now + 0.22);
+      osc.start(now);
+      osc.stop(now + 0.2);
     }
   } catch (e) {
-    console.warn("Audio playback not supported or blocked: ", e);
+    console.warn("Audio playback not supported: ", e);
   }
 }
 
@@ -277,6 +255,11 @@ let highlightPlanes = []; // Holds range indicator meshes (green/red)
 let hoverHighlightMesh; // Wireframe outline for hover
 const debrisList = []; // Particle effects list
 let projectiles = []; // Menzilli mermi ve büyü efektleri listesi
+
+// Medieval Castle Arena Environment lists
+let torchLights = [];
+let spectatorList = [];
+let emberParticles = null;
 
 // Raycasting & Mouse Interaction
 const raycaster = new THREE.Raycaster();
@@ -338,6 +321,90 @@ const diagAp = document.getElementById('diag-ap');
 
 const combatLog = document.getElementById('combat-log');
 const returnLobbyBtn = document.getElementById('return-lobby-btn');
+const diagCloseBtn = document.getElementById('diag-close-btn');
+const logMobileToggleBtn = document.getElementById('log-mobile-toggle-btn');
+const camResetBtn = document.getElementById('cam-reset-btn');
+
+// Waiting screen countdown and cancel elements
+const cancelRoomBtn = document.getElementById('cancel-room-btn');
+const waitingCountdown = document.getElementById('waiting-countdown');
+const waitingTimerProgress = document.getElementById('waiting-timer-progress');
+let waitingTimerInterval = null;
+
+function startWaitingTimer(expiresAt, durationSeconds = 60) {
+  stopWaitingTimer();
+
+  function update() {
+    const now = Date.now();
+    const remainingMs = Math.max(0, expiresAt - now);
+    const remainingSec = Math.ceil(remainingMs / 1000);
+    const pct = Math.max(0, Math.min(100, (remainingMs / (durationSeconds * 1000)) * 100));
+
+    if (waitingCountdown) {
+      waitingCountdown.textContent = `${remainingSec}s`;
+      if (remainingSec <= 15) {
+        waitingCountdown.classList.add('warning');
+      } else {
+        waitingCountdown.classList.remove('warning');
+      }
+    }
+
+    if (waitingTimerProgress) {
+      waitingTimerProgress.style.width = `${pct}%`;
+      if (remainingSec <= 15) {
+        waitingTimerProgress.classList.add('warning');
+      } else {
+        waitingTimerProgress.classList.remove('warning');
+      }
+    }
+
+    if (remainingMs <= 0) {
+      stopWaitingTimer();
+    }
+  }
+
+  update();
+  waitingTimerInterval = setInterval(update, 500);
+}
+
+function stopWaitingTimer() {
+  if (waitingTimerInterval) {
+    clearInterval(waitingTimerInterval);
+    waitingTimerInterval = null;
+  }
+  if (waitingCountdown) {
+    waitingCountdown.textContent = '60s';
+    waitingCountdown.classList.remove('warning');
+  }
+  if (waitingTimerProgress) {
+    waitingTimerProgress.style.width = '100%';
+    waitingTimerProgress.classList.remove('warning');
+  }
+}
+
+// Cancel Room Button Click Handler
+if (cancelRoomBtn) {
+  cancelRoomBtn.addEventListener('click', () => {
+    if (currentRoomCode) {
+      socket.emit('cancelRoom', { roomCode: currentRoomCode });
+    }
+    stopWaitingTimer();
+    waitingScreen.classList.remove('active');
+    lobbyScreen.classList.add('active');
+    lobbyStatus.textContent = 'Oda oluşturma iptal edildi.';
+    currentRoomCode = null;
+    playSound('select');
+  });
+}
+
+// Diagnostic Close Button
+if (diagCloseBtn) {
+  diagCloseBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    deselectUnit();
+    playSound('select');
+  });
+}
 
 // Guide Modal elements
 const guideModal = document.getElementById('guide-modal');
@@ -448,17 +515,38 @@ endTurnBtn.addEventListener('click', () => {
 // Log Toggle Panel Minimizer
 const logToggleBtn = document.getElementById('log-toggle-btn');
 const combatLogPanel = document.getElementById('combat-log-panel');
-if (logToggleBtn && combatLogPanel) {
-  logToggleBtn.addEventListener('click', () => {
-    combatLogPanel.classList.toggle('minimized');
-    if (combatLogPanel.classList.contains('minimized')) {
-      logToggleBtn.textContent = '◀';
-    } else {
-      logToggleBtn.textContent = '▶';
-    }
+
+function toggleCombatLog() {
+  if (!combatLogPanel) return;
+  combatLogPanel.classList.toggle('minimized');
+  const isMin = combatLogPanel.classList.contains('minimized');
+  if (logToggleBtn) {
+    logToggleBtn.textContent = isMin ? '◀' : '▶';
+  }
+  playSound('select');
+}
+
+if (logToggleBtn) logToggleBtn.addEventListener('click', toggleCombatLog);
+if (logMobileToggleBtn) logMobileToggleBtn.addEventListener('click', toggleCombatLog);
+
+// On mobile phones, default combat log to minimized so it doesn't obstruct view
+if (window.innerWidth <= 768 && combatLogPanel) {
+  combatLogPanel.classList.add('minimized');
+  if (logToggleBtn) logToggleBtn.textContent = '◀';
+}
+
+// Camera Reset Button
+if (camResetBtn) {
+  camResetBtn.addEventListener('click', () => {
+    resetCameraView();
     playSound('select');
   });
 }
+
+// Prevent double-tap zoom on iOS / touch devices
+document.addEventListener('dblclick', (e) => {
+  e.preventDefault();
+}, { passive: false });
 
 returnLobbyBtn.addEventListener('click', () => {
   window.location.reload();
@@ -492,11 +580,32 @@ function addLog(text, type = 'system') {
 // ==========================================
 // SOCKET EVENT HANDLERS
 // ==========================================
-socket.on('roomCreated', ({ code }) => {
+socket.on('roomCreated', ({ code, timeoutDuration, expiresAt }) => {
   currentRoomCode = code;
   lobbyScreen.classList.remove('active');
   waitingScreen.classList.add('active');
   displayRoomCode.textContent = code;
+
+  // Start 1-minute countdown timer
+  const exp = expiresAt || (Date.now() + (timeoutDuration || 60) * 1000);
+  startWaitingTimer(exp, timeoutDuration || 60);
+});
+
+socket.on('roomTimeout', ({ message }) => {
+  stopWaitingTimer();
+  currentRoomCode = null;
+  waitingScreen.classList.remove('active');
+  lobbyScreen.classList.add('active');
+  showError(message || '1 dakika boyunca bağlantı olmadığı için oda kapatıldı.');
+  lobbyStatus.textContent = 'Oda zaman aşımına uğradı. Yeni maç oluşturun veya katılın.';
+});
+
+socket.on('roomCancelled', ({ message }) => {
+  stopWaitingTimer();
+  currentRoomCode = null;
+  waitingScreen.classList.remove('active');
+  lobbyScreen.classList.add('active');
+  lobbyStatus.textContent = message || 'Oda oluşturma iptal edildi.';
 });
 
 socket.on('errorMsg', ({ message }) => {
@@ -505,6 +614,7 @@ socket.on('errorMsg', ({ message }) => {
 });
 
 socket.on('gameStart', ({ team, players, gameState, roomCode }) => {
+  stopWaitingTimer();
   myTeam = team;
   currentRoomCode = roomCode;
   activeTeam = gameState.activeTeam;
@@ -534,9 +644,9 @@ socket.on('gameStart', ({ team, players, gameState, roomCode }) => {
     hudTeamColor.className = 'value neon-text-red';
   }
 
-  addLog(`Taktik bağlantı kuruldu. Sektöre hoş geldiniz.`, 'system');
-  addLog(`${myUsername} — ${teamText} takıma atandınız.`, myTeam);
-  addLog(`Rakibiniz: ${opponentUsername}`, 'system');
+  addLog(`⚔️ Borazanlar çalıyor! Ortaçağ arenasına hoş geldiniz.`, 'system');
+  addLog(`${myUsername} — ${teamText} sancağına atandınız.`, myTeam);
+  addLog(`Rakip Şövalye: ${opponentUsername}`, 'system');
 
   // Initialize the 3D battlefield
   initThreeJS();
@@ -554,7 +664,7 @@ socket.on('unitMoved', ({ unitId, oldX, oldZ, newX, newZ, apRemaining, gameState
     playSound('move');
 
     // Add movement log
-    addLog(`${unit.name}, (${newX}, ${newZ}) konumuna hareket etti.`, unit.team);
+    addLog(`${unit.name}, taş döşemede (${newX}, ${newZ}) karesine ilerledi.`, unit.team);
 
     // Update diagnostic if selected
     if (selectedUnitId === unitId) {
@@ -598,7 +708,7 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
     const midPoint = new THREE.Vector3().addVectors(attPos, tgtPos).multiplyScalar(0.5);
     cameraTargetPosition.copy(midPoint).add(new THREE.Vector3(0, 3.2, myTeam === 'blue' ? -3.5 : 3.5));
     cameraTargetLookAt.copy(midPoint);
-    cinematicTimer = targetDead ? 1.4 : 0.85; // Odakta kalma süresi
+    cinematicTimer = targetDead ? 1.4 : 0.85;
     isCinematicActive = true;
 
     // Hasar verme, parlama ve ölüm işlemlerini yapacak olan fonksiyon
@@ -607,7 +717,6 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
         // 💨 SAVUŞTURMA (Dodge) Animasyonu & Sesi
         playSound('dodge');
         
-        // Target slips to side (dodge dodge animation)
         const lungeDir = new THREE.Vector3(targetX - attackerX, 0, targetZ - attackerZ).normalize();
         const dodgeDir = new THREE.Vector3(-lungeDir.z, 0, lungeDir.x).multiplyScalar(0.4);
         
@@ -620,7 +729,7 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
         // Spawn floating Dodge Text over target unit
         spawnFloatingDamageText(target.position, "SAVUŞTURULDU", false, true);
 
-        addLog(`SAVUŞTURULDU! ${targetName} çevik bir hareketle saldırıdan sıyrıldı.`, 'system');
+        addLog(`SAVUŞTURULDU! ${targetName} kılıç darbesinden ustalıkla sıyrıldı.`, 'system');
         return;
       }
 
@@ -636,7 +745,7 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
         // Spawn floating Crit Text over target unit
         spawnFloatingDamageText(target.position, `KRİTİK -${damage}`, true, false);
         
-        addLog(`KRİTİK DARBE! ${attackerName}, ${targetName} birliğine ${damage} kritik hasar verdi!`, 'kill');
+        addLog(`⚔️ KRİTİK DARBE! ${attackerName}, ${targetName} birliğine ${damage} ağır hasar vurdu!`, 'kill');
       } else {
         // Normal Darbe
         playSound('hit');
@@ -653,7 +762,7 @@ socket.on('unitAttacked', ({ attackerId, targetId, damage, targetHp, targetDead,
       // 💀 Ölüm durumunu yönet
       if (targetDead) {
         setTimeout(() => {
-          addLog(`${targetName} etkisiz hale getirildi!`, 'kill');
+          addLog(`💀 ${targetName} savaş meydanında yere serildi!`, 'kill');
           playSound('death');
           
           // Özel ölüm efekti
@@ -734,7 +843,7 @@ socket.on('turnEnded', ({ activeTeam: nextTeam, turn, gameState }) => {
   clearHighlights();
 
   const activeTeamText = activeTeam === 'blue' ? 'MAVİ' : 'KIRMIZI';
-  addLog(`Tur döngüsü tamamlandı. Kontrol ${activeTeamText} komutasına geçti.`, 'system');
+  addLog(`Hamle tamamlandı. Sıra ${activeTeamText} sancağında!`, 'system');
 });
 
 socket.on('gameOver', ({ winner }) => {
@@ -745,14 +854,12 @@ socket.on('gameOver', ({ winner }) => {
 
   if (winner === myTeam) {
     title.textContent = "ZAFER KAZANILDI";
-    title.className = "glitch-title neon-text-blue";
-    title.setAttribute('data-text', "ZAFER KAZANILDI");
-    desc.textContent = "Tüm düşman voxel birlikleri başarıyla imha edildi.";
+    title.className = "medieval-title gold-text-title";
+    desc.textContent = "Tüm düşman birlikleri dize getirildi. Meydan sizin!";
   } else {
     title.textContent = "BOZGUN";
-    title.className = "glitch-title neon-text-red";
-    title.setAttribute('data-text', "BOZGUN");
-    desc.textContent = "Savaş birlikleriniz taktiksel konumu korumayı başaramadı.";
+    title.className = "medieval-title neon-text-red";
+    desc.textContent = "Birlikleriniz kale meydanını savunamadı.";
   }
 });
 
@@ -765,29 +872,49 @@ socket.on('opponentDisconnected', ({ message }) => {
 });
 
 // ==========================================
-// THREE.JS ENGINE SETUP
+// CAMERA PRESETS & DYNAMIC SCALING
+// ==========================================
+function getCameraPreset() {
+  const aspect = window.innerWidth / window.innerHeight;
+  let distMult = 1.0;
+  // If portrait (aspect < 1.0, e.g. phones 9/16, 9/19.5), scale distance proportionally
+  if (aspect < 1.0) {
+    distMult = Math.min(2.1, Math.max(1.15, 1.28 / aspect));
+  }
+  const y = 11 * distMult;
+  const z = (myTeam === 'blue' ? -13 : 13) * distMult;
+  return { x: 0, y, z };
+}
+
+function resetCameraView() {
+  if (!camera || !controls) return;
+  const preset = getCameraPreset();
+  cameraDefaultPosition.set(preset.x, preset.y, preset.z);
+  controlsDefaultTarget.set(0, 0, 0);
+  camera.position.copy(cameraDefaultPosition);
+  controls.target.copy(controlsDefaultTarget);
+  controls.update();
+}
+
+// ==========================================
+// THREE.JS ENGINE SETUP (MEDIEVAL CASTLE ARENA)
 // ==========================================
 function initThreeJS() {
   const container = document.getElementById('canvas-container');
   
-  // Create Scene
+  // Create Scene with warm dark midnight sky
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x05050c);
-  // Add volumetric foggy look
-  scene.fog = new THREE.FogExp2(0x05050c, 0.035);
+  scene.background = new THREE.Color(0x0c0a08);
+  scene.fog = new THREE.FogExp2(0x0c0a08, 0.022);
 
-  // Setup Camera
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  
-  // Dynamic camera positioning depending on the assigned player team
-  if (myTeam === 'blue') {
-    camera.position.set(0, 11, -13);
-  } else {
-    camera.position.set(0, 11, 13);
-  }
+  // Setup Camera with dynamic aspect framing
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 120);
+  const initialCam = getCameraPreset();
+  camera.position.set(initialCam.x, initialCam.y, initialCam.z);
 
-  // Setup Renderer
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  // Setup Renderer with mobile GPU 60fps DPR capping
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -799,55 +926,59 @@ function initThreeJS() {
   controls.dampingFactor = 0.05;
   controls.screenSpacePanning = false;
   controls.minDistance = 5;
-  controls.maxDistance = 25;
-  // Prevent looking under grid
-  controls.maxPolarAngle = Math.PI / 2.1;
+  controls.maxDistance = 32;
+  controls.maxPolarAngle = Math.PI / 2.12;
   controls.minPolarAngle = Math.PI / 12;
-  // Center camera target on the 12x12 board center
   controls.target.set(0, 0, 0);
   controls.update();
 
-  // Lights Setup
-  const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+  // Natural Moon & Ambient Lighting
+  const ambient = new THREE.AmbientLight(0xffecd6, 0.62);
   scene.add(ambient);
 
-  const sunLight = new THREE.DirectionalLight(0xffffff, 0.85);
-  sunLight.position.set(6, 14, 4);
-  sunLight.castShadow = true;
-  sunLight.shadow.mapSize.width = 1024;
-  sunLight.shadow.mapSize.height = 1024;
-  sunLight.shadow.camera.near = 0.5;
-  sunLight.shadow.camera.far = 25;
-  const d = 8;
-  sunLight.shadow.camera.left = -d;
-  sunLight.shadow.camera.right = d;
-  sunLight.shadow.camera.top = d;
-  sunLight.shadow.camera.bottom = -d;
-  scene.add(sunLight);
+  const moonLight = new THREE.DirectionalLight(0xdfe8f5, 0.85);
+  moonLight.position.set(8, 16, 6);
+  moonLight.castShadow = true;
+  moonLight.shadow.mapSize.width = 1024;
+  moonLight.shadow.mapSize.height = 1024;
+  moonLight.shadow.camera.near = 0.5;
+  moonLight.shadow.camera.far = 35;
+  const d = 10;
+  moonLight.shadow.camera.left = -d;
+  moonLight.shadow.camera.right = d;
+  moonLight.shadow.camera.top = d;
+  moonLight.shadow.camera.bottom = -d;
+  scene.add(moonLight);
 
-  // Cyberpunk ambient lights (contrasting glowing nodes)
-  const neonBlueLight = new THREE.PointLight(0x00f0ff, 0.7, 18);
-  neonBlueLight.position.set(-7, 3, -7);
-  scene.add(neonBlueLight);
+  // Secondary soft warm torch bounce
+  const bounceLight = new THREE.DirectionalLight(0xff9944, 0.35);
+  bounceLight.position.set(-6, 8, -6);
+  scene.add(bounceLight);
 
-  const neonMagentaLight = new THREE.PointLight(0xff0055, 0.7, 18);
-  neonMagentaLight.position.set(7, 3, 7);
-  scene.add(neonMagentaLight);
+  // Build Medieval Castle Arena, Grandstands, Crowds & Torches
+  buildMedievalArenaEnvironment();
 
-  // Build Star Particles
-  buildStars();
+  // Build Floating Amber Sparks & Embers
+  buildEmberParticles();
 
-  // Create Grid board
+  // Create 12x12 Medieval Stone Flagstone Grid
   buildVoxelGrid();
 
-  // Event Listeners
+  // Event Listeners (Mouse + Touch Pointer events with Tap vs Drag disambiguation)
   window.addEventListener('resize', onWindowResize);
-  renderer.domElement.addEventListener('mousemove', onMouseMove);
-  renderer.domElement.addEventListener('click', onClick);
+  window.addEventListener('orientationchange', () => {
+    setTimeout(onWindowResize, 100);
+    setTimeout(onWindowResize, 350);
+  });
+
+  renderer.domElement.addEventListener('mousemove', onMouseMove, { passive: true });
+  renderer.domElement.addEventListener('pointerdown', onPointerDown, { passive: true });
+  renderer.domElement.addEventListener('pointerup', onPointerUp, { passive: true });
 
   // Save default position after setting up
   setTimeout(() => {
-    cameraDefaultPosition.copy(camera.position);
+    const preset = getCameraPreset();
+    cameraDefaultPosition.set(preset.x, preset.y, preset.z);
     controlsDefaultTarget.copy(controls.target);
   }, 100);
 
@@ -855,49 +986,287 @@ function initThreeJS() {
   animate();
 }
 
-function buildStars() {
-  const particleGeo = new THREE.BufferGeometry();
-  const count = 200;
+function buildEmberParticles() {
+  const count = 160;
   const positions = new Float32Array(count * 3);
 
   for (let i = 0; i < count * 3; i += 3) {
-    positions[i] = (Math.random() - 0.5) * 50;
-    positions[i + 1] = Math.random() * 20 - 5;
-    positions[i + 2] = (Math.random() - 0.5) * 50;
+    positions[i] = (Math.random() - 0.5) * 22;
+    positions[i + 1] = Math.random() * 8;
+    positions[i + 2] = (Math.random() - 0.5) * 22;
   }
 
+  const particleGeo = new THREE.BufferGeometry();
   particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
   const particleMat = new THREE.PointsMaterial({
-    size: 0.12,
-    color: 0x00f0ff,
+    size: 0.16,
+    color: 0xffaa22,
     transparent: true,
-    opacity: 0.5,
+    opacity: 0.75,
     blending: THREE.AdditiveBlending
   });
 
-  const starParticles = new THREE.Points(particleGeo, particleMat);
-  scene.add(starParticles);
+  emberParticles = new THREE.Points(particleGeo, particleMat);
+  scene.add(emberParticles);
 }
 
-// Generate the 12x12 voxel ground
+function buildMedievalArenaEnvironment() {
+  torchLights = [];
+  spectatorList = [];
+
+  const stoneDarkMat = new THREE.MeshStandardMaterial({ color: 0x272421, roughness: 0.95 });
+  const stoneMidMat = new THREE.MeshStandardMaterial({ color: 0x38342f, roughness: 0.9 });
+  const stoneLightMat = new THREE.MeshStandardMaterial({ color: 0x4a453f, roughness: 0.85 });
+  const woodStandMat = new THREE.MeshStandardMaterial({ color: 0x3d2716, roughness: 0.9 });
+  const ironMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1c, roughness: 0.4, metalness: 0.8 });
+  const goldTrimMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.7 });
+
+  // 1. CORNER BATTLE TOWERS (4 Large Castle Watchtowers)
+  const towerPositions = [
+    [-8.6, -8.6],
+    [8.6, -8.6],
+    [-8.6, 8.6],
+    [8.6, 8.6]
+  ];
+
+  towerPositions.forEach(([tx, tz]) => {
+    const towerGroup = new THREE.Group();
+    towerGroup.position.set(tx, 0, tz);
+
+    // Tower main body
+    const towerBody = new THREE.Mesh(new THREE.BoxGeometry(2.8, 4.5, 2.8), stoneDarkMat);
+    towerBody.position.set(0, 1.8, 0);
+    towerBody.castShadow = true;
+    towerBody.receiveShadow = true;
+    towerGroup.add(towerBody);
+
+    // Tower cornices
+    const cornice = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.3, 3.1), stoneLightMat);
+    cornice.position.set(0, 4.15, 0);
+    towerGroup.add(cornice);
+
+    // Crenellations / Merlons (battlements on top)
+    const merlonCoords = [
+      [-1.3, -1.3], [1.3, -1.3], [-1.3, 1.3], [1.3, 1.3],
+      [0, -1.3], [0, 1.3], [-1.3, 0], [1.3, 0]
+    ];
+    merlonCoords.forEach(([mx, mz]) => {
+      const merlon = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 0.5), stoneMidMat);
+      merlon.position.set(mx, 4.5, mz);
+      merlon.castShadow = true;
+      towerGroup.add(merlon);
+    });
+
+    // Flagpole & Banner
+    const flagpole = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.2, 0.08), woodStandMat);
+    flagpole.position.set(0, 5.2, 0);
+    towerGroup.add(flagpole);
+
+    const bannerColor = (tx > 0) ? 0x991b1b : 0x1e40af; // Red team vs Blue team corners
+    const bannerMat = new THREE.MeshStandardMaterial({ color: bannerColor, roughness: 0.7, side: THREE.DoubleSide });
+    const banner = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.9, 0.6), bannerMat);
+    banner.position.set(0, 5.5, 0.32);
+    towerGroup.add(banner);
+
+    scene.add(towerGroup);
+  });
+
+  // 2. FORTRESS WALLS (North, South, East, West connecting walls)
+  [[-8.6, 0], [8.6, 0]].forEach(([dummy, ry], idx) => {
+    const wallZ = (idx === 0) ? -8.6 : 8.6;
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(14.4, 2.8, 1.2), stoneDarkMat);
+    wall.position.set(0, 1.0, wallZ);
+    wall.castShadow = true;
+    wall.receiveShadow = true;
+    scene.add(wall);
+
+    const parapet = new THREE.Mesh(new THREE.BoxGeometry(14.4, 0.4, 1.4), stoneMidMat);
+    parapet.position.set(0, 2.5, wallZ);
+    scene.add(parapet);
+  });
+
+  // 3. ROYAL FACTION BANNERS DRAPED OVER WALLS
+  const blueTapestry = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.2, 0.06), new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.7 }));
+  blueTapestry.position.set(0, 1.2, -7.95);
+  scene.add(blueTapestry);
+  const blueGoldCrest = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.08), goldTrimMat);
+  blueGoldCrest.position.set(0, 1.3, -7.94);
+  scene.add(blueGoldCrest);
+
+  const redTapestry = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.2, 0.06), new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.7 }));
+  redTapestry.position.set(0, 1.2, 7.95);
+  scene.add(redTapestry);
+  const redGoldCrest = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.08), goldTrimMat);
+  redGoldCrest.position.set(0, 1.3, 7.94);
+  scene.add(redGoldCrest);
+
+  // 4. ARENA GRANDSTANDS & SPECTATOR BLEACHERS (East and West sides)
+  const standSides = [-8.4, 8.4];
+  standSides.forEach(sx => {
+    const isEast = sx > 0;
+    const standGroup = new THREE.Group();
+    standGroup.position.set(sx, 0, 0);
+
+    // 3 Tiers of wooden bleachers
+    for (let tier = 0; tier < 3; tier++) {
+      const tierHeight = 0.55 * (tier + 1);
+      const tierOffset = (tier * 0.75) * (isEast ? 1 : -1);
+
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(0.7, tierHeight, 12.0), woodStandMat);
+      bench.position.set(tierOffset, tierHeight * 0.5, 0);
+      bench.castShadow = true;
+      bench.receiveShadow = true;
+      standGroup.add(bench);
+
+      // Populate each tier with living medieval spectators
+      const tunicColors = [0x5c3d2e, 0x8b5a2b, 0x2e4057, 0x3d5a40, 0x7c3f00, 0x4a5568, 0x6b21a8, 0x1e3a8a, 0x991b1b, 0x92400e];
+      const countOnTier = 7;
+      for (let s = 0; s < countOnTier; s++) {
+        const specZ = -4.8 + s * 1.6 + (Math.random() - 0.5) * 0.3;
+        const specX = tierOffset + (isEast ? -0.1 : 0.1);
+        const specY = tierHeight;
+
+        const specGroup = new THREE.Group();
+        specGroup.position.set(specX, specY, specZ);
+        if (isEast) specGroup.rotation.y = -Math.PI / 2;
+        else specGroup.rotation.y = Math.PI / 2;
+
+        const tunicColor = tunicColors[Math.floor(Math.random() * tunicColors.length)];
+        const specTunicMat = new THREE.MeshStandardMaterial({ color: tunicColor, roughness: 0.8 });
+        const specSkinMat = new THREE.MeshStandardMaterial({ color: 0xffd1a4, roughness: 0.8 });
+
+        // Body / Tunic
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.34, 0.18), specTunicMat);
+        body.position.set(0, 0.17, 0);
+        body.castShadow = true;
+        specGroup.add(body);
+
+        // Head
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.18), specSkinMat);
+        head.position.set(0, 0.42, 0);
+        specGroup.add(head);
+
+        // Hat / Cap (Peasant hood, merchant beret, guard kettle hat)
+        const hatType = Math.floor(Math.random() * 3);
+        if (hatType === 0) {
+          const cap = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.22), specTunicMat);
+          cap.position.set(0, 0.52, 0);
+          specGroup.add(cap);
+        } else if (hatType === 1) {
+          const kettle = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.06, 0.24), ironMat);
+          kettle.position.set(0, 0.52, 0);
+          specGroup.add(kettle);
+        }
+
+        // Arm (right arm that waves during cheer)
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.08), specTunicMat);
+        arm.position.set(0.16, 0.22, 0.04);
+        specGroup.add(arm);
+
+        standGroup.add(specGroup);
+
+        spectatorList.push({
+          group: specGroup,
+          arm: arm,
+          head: head,
+          baseY: specY,
+          speed: 0.003 + Math.random() * 0.004,
+          offset: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    scene.add(standGroup);
+  });
+
+  // 5. EIGHT ARENA FLAMING TORCHES ON STONE PILLARS
+  const torchCoords = [
+    [-6.3, -6.3], [6.3, -6.3], [-6.3, 6.3], [6.3, 6.3], // 4 Corners
+    [0, -6.4], [0, 6.4], [-6.4, 0], [6.4, 0]             // 4 Center Sconces
+  ];
+
+  torchCoords.forEach(([px, pz], idx) => {
+    const pillarGroup = new THREE.Group();
+    pillarGroup.position.set(px, 0, pz);
+
+    // Stone plinth pillar
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.8, 0.55), stoneMidMat);
+    pillar.position.set(0, 0.9, 0);
+    pillar.castShadow = true;
+    pillarGroup.add(pillar);
+
+    // Iron torch bracket
+    const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.35, 0.2), ironMat);
+    bracket.position.set(0, 1.9, 0);
+    pillarGroup.add(bracket);
+
+    // Glowing flame voxels
+    const flameMat = new THREE.MeshStandardMaterial({
+      color: 0xff7700,
+      emissive: 0xff4400,
+      emissiveIntensity: 2.2,
+      roughness: 0.3
+    });
+    const flame = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.22), flameMat);
+    flame.position.set(0, 2.15, 0);
+    flame.name = "torchFlame";
+    pillarGroup.add(flame);
+
+    // Inner bright yellow flame core
+    const flameCore = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.2, 0.12), new THREE.MeshStandardMaterial({
+      color: 0xffea75,
+      emissive: 0xffd700,
+      emissiveIntensity: 3.0
+    }));
+    flameCore.position.set(0, 2.18, 0);
+    pillarGroup.add(flameCore);
+
+    // Dynamic flickering PointLight
+    const torchLight = new THREE.PointLight(0xff8c1a, 1.4, 9.5);
+    torchLight.position.set(0, 2.3, 0);
+    torchLight.userData = {
+      baseIntensity: 1.35 + (idx % 2) * 0.15,
+      idx: idx
+    };
+    pillarGroup.add(torchLight);
+    torchLights.push(torchLight);
+
+    scene.add(pillarGroup);
+  });
+}
+
+// Generate the 12x12 authentic Medieval Stone Arena Ground
 function buildVoxelGrid() {
-  const borderGeometry = new THREE.BoxGeometry(0.96, 0.45, 0.96);
+  const stoneTileGeo = new THREE.BoxGeometry(0.96, 0.44, 0.96);
   
+  // Varied medieval flagstone palette
+  const stoneColors = [
+    0x35322e, 0x2b2825, 0x3d3a36, 0x2f2d2a, 0x433f3a, 0x282522
+  ];
+
   for (let x = 0; x < 12; x++) {
     for (let z = 0; z < 12; z++) {
-      // Chessboard dark cyberpunk coloring
-      const isEven = (x + z) % 2 === 0;
-      const tileColor = isEven ? 0x121220 : 0x0c0c18;
+      // Alternating flagstone pattern with procedural stone color noise
+      const colorIndex = (x * 3 + z * 7 + (x + z) % 3) % stoneColors.length;
+      let baseTileColor = stoneColors[colorIndex];
       
+      // Center 4 tiles have special inlaid arena ring tint
+      const isCenter = (x >= 5 && x <= 6 && z >= 5 && z <= 6);
+      if (isCenter) {
+        baseTileColor = 0x4c4235; // slightly warmer gilded granite
+      }
+
       const tileMat = new THREE.MeshStandardMaterial({
-        color: tileColor,
-        roughness: 0.8,
-        metalness: 0.2
+        color: baseTileColor,
+        roughness: 0.92,
+        metalness: 0.15
       });
 
-      const tileMesh = new THREE.Mesh(borderGeometry, tileMat);
-      // Map 0-11 space to centered -5.5 to +5.5 space
-      tileMesh.position.set(x - 5.5, -0.225, z - 5.5);
+      const tileMesh = new THREE.Mesh(stoneTileGeo, tileMat);
+      // Subtle organic stone height variation
+      const heightJitter = ((x * 13 + z * 17) % 7) * 0.006;
+      tileMesh.position.set(x - 5.5, -0.22 - heightJitter, z - 5.5);
       tileMesh.receiveShadow = true;
       tileMesh.userData = { gridX: x, gridZ: z };
       
@@ -906,36 +1275,45 @@ function buildVoxelGrid() {
     }
   }
 
-  // Draw cyber digital lines separating tiles
-  const gridHelper = new THREE.GridHelper(12, 12, 0x00f0ff, 0x22223c);
-  gridHelper.position.set(0, 0, 0);
+  // Dark stone mortar divider grid
+  const gridHelper = new THREE.GridHelper(12, 12, 0xd4af37, 0x1f1c18);
+  gridHelper.position.set(0, 0.002, 0);
   scene.add(gridHelper);
 
-  // Add outer boundary glowing border
-  const borderGeo = new THREE.BoxGeometry(12.3, 0.5, 12.3);
+  // Center Arena Royal Crest Ring Inlay (Ring in flagstones)
+  const ringGeo = new THREE.RingGeometry(1.4, 1.55, 32);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, side: THREE.DoubleSide, transparent: true, opacity: 0.35 });
+  const centerRing = new THREE.Mesh(ringGeo, ringMat);
+  centerRing.rotation.x = -Math.PI / 2;
+  centerRing.position.set(0, 0.005, 0);
+  scene.add(centerRing);
+
+  // Outer Chiseled Stone Rampart Curb (Thick Fortress Rim)
+  const borderGeo = new THREE.BoxGeometry(12.5, 0.48, 12.5);
   const borderMat = new THREE.MeshStandardMaterial({
-    color: 0x0c0c16,
-    roughness: 0.5,
-    metalness: 0.5
+    color: 0x221f1c,
+    roughness: 0.95,
+    metalness: 0.2
   });
   const borderMesh = new THREE.Mesh(borderGeo, borderMat);
-  borderMesh.position.set(0, -0.26, 0);
+  borderMesh.position.set(0, -0.25, 0);
+  borderMesh.receiveShadow = true;
   scene.add(borderMesh);
 
-  // Outer framing glowing wireframe
-  const frameGeo = new THREE.BoxGeometry(12.4, 0.52, 12.4);
+  // Iron-studded Corner Brackets & Golden Rim
+  const frameGeo = new THREE.BoxGeometry(12.55, 0.5, 12.55);
   const edges = new THREE.EdgesGeometry(frameGeo);
-  const lineMat = new THREE.LineBasicMaterial({ color: 0xff0055, linewidth: 2 });
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xd4af37, linewidth: 2 });
   const frameWireframe = new THREE.LineSegments(edges, lineMat);
-  frameWireframe.position.set(0, -0.26, 0);
+  frameWireframe.position.set(0, -0.25, 0);
   scene.add(frameWireframe);
 
-  // Hover Highlight wireframe mesh
-  const hoverGeo = new THREE.BoxGeometry(1.02, 0.5, 1.02);
+  // Hover Highlight mesh: warm torchlit golden rune outline
+  const hoverGeo = new THREE.BoxGeometry(1.02, 0.48, 1.02);
   const hoverEdges = new THREE.EdgesGeometry(hoverGeo);
-  const hoverLineMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 2 });
+  const hoverLineMat = new THREE.LineBasicMaterial({ color: 0xffb700, linewidth: 2.5 });
   hoverHighlightMesh = new THREE.LineSegments(hoverEdges, hoverLineMat);
-  hoverHighlightMesh.position.set(0, -100, 0); // Hide initially
+  hoverHighlightMesh.position.set(0, -100, 0);
   scene.add(hoverHighlightMesh);
 }
 
@@ -976,7 +1354,6 @@ function syncUnits(units) {
         gridZ: unit.z,
         maxHp: unit.maxHp || unit.hp
       };
-      // Center unit position
       // Center unit position (set to y = 0 to place on grid)
       mesh.position.set(unit.x - 5.5, 0.0, unit.z - 5.5);
 
@@ -1007,119 +1384,121 @@ function syncUnits(units) {
   });
 }
 
-// Procedural modeling of Voxel units
+// Procedural modeling of Authentic Medieval Voxel units
 function createVoxelUnit(type, team) {
   const group = new THREE.Group();
   
-  const tunicColor = team === 'blue' ? 0x0055ff : 0xff0044;
-  const helmetColor = 0x738a9c;
+  const tunicColor = team === 'blue' ? 0x1e3a8a : 0x991b1b;
+  const tunicAccent = team === 'blue' ? 0x3b82f6 : 0xef4444;
+  const helmetColor = 0x8a9ba8;
   const skinColor = 0xffd1a4;
-  const shieldColor = 0x8b5a2b;
-  const steelColor = 0xccd9e8;
-  const goldColor = 0xffc400;
-  const bowColor = 0xa66f3c;
-  const horseColor = 0x7c533c;
-  const horseManeColor = 0x1e1e1e;
+  const shieldColor = 0x6b4423;
+  const steelColor = 0xc8d6e5;
+  const darkSteelColor = 0x475569;
+  const goldColor = 0xd4af37;
+  const woodColor = 0x5c3d2e;
+  const horseColor = 0x6e473b;
+  const horseManeColor = 0x1c1917;
 
-  // Setup Standard Materials
-  const tunicMat = new THREE.MeshStandardMaterial({ color: tunicColor, roughness: 0.6 });
+  // Setup Standard Medieval Materials
+  const tunicMat = new THREE.MeshStandardMaterial({ color: tunicColor, roughness: 0.65 });
+  const tunicAccentMat = new THREE.MeshStandardMaterial({ color: tunicAccent, roughness: 0.6 });
   const skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.8 });
-  const steelMat = new THREE.MeshStandardMaterial({ color: steelColor, roughness: 0.25, metalness: 0.85 });
-  const goldMat = new THREE.MeshStandardMaterial({ color: goldColor, roughness: 0.2, metalness: 0.9 });
-  const woodMat = new THREE.MeshStandardMaterial({ color: bowColor, roughness: 0.8 });
+  const steelMat = new THREE.MeshStandardMaterial({ color: steelColor, roughness: 0.2, metalness: 0.88 });
+  const darkSteelMat = new THREE.MeshStandardMaterial({ color: darkSteelColor, roughness: 0.25, metalness: 0.85 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: goldColor, roughness: 0.2, metalness: 0.92 });
+  const woodMat = new THREE.MeshStandardMaterial({ color: woodColor, roughness: 0.85 });
+  const leatherMat = new THREE.MeshStandardMaterial({ color: 0x4a2e18, roughness: 0.8 });
 
   if (type === 'Infantry') {
+    // Man-at-Arms (Chainmail coif, nasal helmet, heater shield, broadsword)
     // Legs
-    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.12), tunicMat);
-    legL.position.set(-0.14, 0.11, 0);
-    legL.castShadow = true;
-    legL.name = "legL";
-    group.add(legL);
+    [-0.14, 0.14].forEach((lx, idx) => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.12), leatherMat);
+      leg.position.set(lx, 0.11, 0);
+      leg.castShadow = true;
+      leg.name = idx === 0 ? "legL" : "legR";
+      group.add(leg);
+    });
 
-    const legR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.12), tunicMat);
-    legR.position.set(0.14, 0.11, 0);
-    legR.castShadow = true;
-    legR.name = "legR";
-    group.add(legR);
-
-    // Torso
+    // Torso (Chainmail hauberk with heraldic surcoat)
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.44, 0.28), tunicMat);
     torso.position.set(0, 0.44, 0);
     torso.castShadow = true;
     group.add(torso);
 
-    // Head
+    const surcoatCross = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.32, 0.29), goldMat);
+    surcoatCross.position.set(0, 0.44, 0);
+    group.add(surcoatCross);
+
+    // Head (Chainmail coif)
     const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), skinMat);
     head.position.set(0, 0.8, 0);
     head.castShadow = true;
     group.add(head);
 
-    // Helmet
-    const helmetMat = new THREE.MeshStandardMaterial({ color: helmetColor, roughness: 0.3, metalness: 0.7 });
-    const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.12, 0.32), helmetMat);
+    // Nasal Helmet
+    const helmetMat = new THREE.MeshStandardMaterial({ color: helmetColor, roughness: 0.3, metalness: 0.75 });
+    const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.14, 0.32), helmetMat);
     helmet.position.set(0, 0.94, 0);
     helmet.castShadow = true;
     group.add(helmet);
 
-    // Plume
-    const plumeMat = new THREE.MeshStandardMaterial({ 
-      color: team === 'blue' ? 0x00f0ff : 0xff0055, 
-      emissive: team === 'blue' ? 0x00a0aa : 0xaa0033,
-      emissiveIntensity: 0.4
-    });
-    const plume = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.2), plumeMat);
-    plume.position.set(0, 1.05, -0.05);
-    group.add(plume);
+    const nasalGuard = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.06), steelMat);
+    nasalGuard.position.set(0, 0.84, 0.15);
+    group.add(nasalGuard);
 
-    // Shield (on left arm)
+    // Heater Shield (left arm)
     const shieldGroup = new THREE.Group();
     shieldGroup.position.set(-0.28, 0.44, 0.08);
-    const shieldPlate = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.38, 0.26), new THREE.MeshStandardMaterial({ color: shieldColor, roughness: 0.9 }));
+    const shieldPlate = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.28), tunicMat);
     shieldPlate.castShadow = true;
     shieldGroup.add(shieldPlate);
     
-    // Shield trim
-    const shieldTrim = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.42, 0.05), steelMat);
-    shieldTrim.position.set(-0.01, 0, 0);
+    const shieldTrim = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.44, 0.04), steelMat);
+    shieldTrim.position.set(-0.01, 0, 0.12);
     shieldGroup.add(shieldTrim);
+
+    const shieldBoss = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.1), goldMat);
+    shieldBoss.position.set(-0.01, 0, 0);
+    shieldGroup.add(shieldBoss);
     group.add(shieldGroup);
 
-    // Sword (on right arm)
+    // Forged Steel Broadsword (right arm)
     const swordGroup = new THREE.Group();
     swordGroup.position.set(0.28, 0.44, 0.08);
-    swordGroup.rotation.x = -Math.PI / 4; // hold tilted forward
+    swordGroup.rotation.x = -Math.PI / 4;
 
-    // Blade
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.42, 0.08), steelMat);
-    blade.position.set(0, 0.24, 0);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.44, 0.08), steelMat);
+    blade.position.set(0, 0.25, 0);
     blade.castShadow = true;
     swordGroup.add(blade);
-    // Guard
-    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.06), goldMat);
+
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.06), goldMat);
     guard.position.set(0, 0.05, 0);
     swordGroup.add(guard);
-    // Handle
-    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.04), woodMat);
+
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.09, 0.04), leatherMat);
     handle.position.set(0, -0.01, 0);
     swordGroup.add(handle);
+
+    const pommel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.06), goldMat);
+    pommel.position.set(0, -0.07, 0);
+    swordGroup.add(pommel);
 
     group.add(swordGroup);
 
   } else if (type === 'Archer') {
-    // Legs
-    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), tunicMat);
-    legL.position.set(-0.12, 0.1, 0);
-    legL.castShadow = true;
-    legL.name = "legL";
-    group.add(legL);
+    // Longbowman (Hooded mantle, yew longbow, quiver with arrows)
+    [-0.12, 0.12].forEach((lx, idx) => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), leatherMat);
+      leg.position.set(lx, 0.1, 0);
+      leg.castShadow = true;
+      leg.name = idx === 0 ? "legL" : "legR";
+      group.add(leg);
+    });
 
-    const legR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), tunicMat);
-    legR.position.set(0.12, 0.1, 0);
-    legR.castShadow = true;
-    legR.name = "legR";
-    group.add(legR);
-
-    // Torso
+    // Torso (Leather brigandine & green tunic)
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.4, 0.24), tunicMat);
     torso.position.set(0, 0.4, 0);
     torso.castShadow = true;
@@ -1131,43 +1510,52 @@ function createVoxelUnit(type, team) {
     head.castShadow = true;
     group.add(head);
 
-    // Archer cowl / hat
-    const hatMat = new THREE.MeshStandardMaterial({ color: 0x3b6633, roughness: 0.8 }); // Forest green
+    // Hooded Cowl / Forest Archer Cap
+    const hatMat = new THREE.MeshStandardMaterial({ color: 0x2e4a2b, roughness: 0.85 });
     const hatBase = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.3), hatMat);
     hatBase.position.set(0, 0.86, 0);
     group.add(hatBase);
     
-    const hatTop = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.22), hatMat);
+    const hatTop = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.24), hatMat);
     hatTop.position.set(0, 0.94, -0.04);
     group.add(hatTop);
 
-    // Red feather
-    const feather = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.06), new THREE.MeshStandardMaterial({ color: 0xff3300 }));
-    feather.position.set(0.08, 1.0, -0.06);
+    // Pheasant feather on hat
+    const feather = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.06), goldMat);
+    feather.position.set(0.08, 1.02, -0.06);
     feather.rotation.z = -Math.PI / 6;
     group.add(feather);
 
-    // Bow (held out left hand)
+    // Back Quiver packed with arrows
+    const quiver = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.38, 0.1), leatherMat);
+    quiver.position.set(-0.1, 0.46, -0.16);
+    quiver.rotation.z = Math.PI / 8;
+    group.add(quiver);
+
+    const fletch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.08), new THREE.MeshStandardMaterial({ color: 0xf5f5f5 }));
+    fletch.position.set(-0.14, 0.68, -0.16);
+    group.add(fletch);
+
+    // English Yew Longbow (held out left hand)
     const bowGroup = new THREE.Group();
     bowGroup.position.set(-0.25, 0.42, 0.22);
     
     const bowMiddle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 0.06), woodMat);
     bowGroup.add(bowMiddle);
     
-    const bowTop = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.06), woodMat);
-    bowTop.position.set(0, 0.13, -0.04);
-    bowTop.rotation.x = Math.PI / 12;
+    const bowTop = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.26, 0.05), woodMat);
+    bowTop.position.set(0, 0.15, -0.05);
+    bowTop.rotation.x = Math.PI / 10;
     bowGroup.add(bowTop);
 
-    const bowBottom = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.06), woodMat);
-    bowBottom.position.set(0, -0.13, -0.04);
-    bowBottom.rotation.x = -Math.PI / 12;
+    const bowBottom = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.26, 0.05), woodMat);
+    bowBottom.position.set(0, -0.15, -0.05);
+    bowBottom.rotation.x = -Math.PI / 10;
     bowGroup.add(bowBottom);
 
-    // Bow string
     const stringMat = new THREE.MeshBasicMaterial({ color: 0xdddddd });
-    const string = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.5, 0.01), stringMat);
-    string.position.set(0, 0, -0.1);
+    const string = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.54, 0.01), stringMat);
+    string.position.set(0, 0, -0.11);
     bowGroup.add(string);
 
     group.add(bowGroup);
@@ -1177,37 +1565,35 @@ function createVoxelUnit(type, team) {
     arrowGroup.position.set(0.18, 0.42, 0.1);
     arrowGroup.rotation.y = -Math.PI / 5;
 
-    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.32), woodMat);
+    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.34), woodMat);
     shaft.position.set(0, 0, 0.08);
     arrowGroup.add(shaft);
 
     const arrowhead = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.06), steelMat);
-    arrowhead.position.set(0, 0, 0.24);
+    arrowhead.position.set(0, 0, 0.26);
     arrowGroup.add(arrowhead);
-
-    const fletching = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-    fletching.position.set(0, 0, -0.08);
-    arrowGroup.add(fletching);
 
     group.add(arrowGroup);
 
   } else if (type === 'Cavalry') {
-    // Horse structure
+    // Armored Knight on Warhorse with heraldic caparison
     const horseGroup = new THREE.Group();
-    horseGroup.position.set(0, 0, 0);
-
-    const horseMat = new THREE.MeshStandardMaterial({ color: horseColor, roughness: 0.6 });
-    const horseManeMat = new THREE.MeshStandardMaterial({ color: horseManeColor, roughness: 0.8 });
-    const horseHoofMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+    const horseMat = new THREE.MeshStandardMaterial({ color: horseColor, roughness: 0.7 });
+    const horseManeMat = new THREE.MeshStandardMaterial({ color: horseManeColor, roughness: 0.85 });
 
     // Horse body
-    const hBody = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.34, 0.82), horseMat);
+    const hBody = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.36, 0.84), horseMat);
     hBody.position.set(0, 0.3, 0);
     hBody.castShadow = true;
     horseGroup.add(hBody);
 
+    // Barded Cloth Caparison (heraldic horse armor blanket)
+    const caparison = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.28, 0.86), tunicMat);
+    caparison.position.set(0, 0.26, 0);
+    horseGroup.add(caparison);
+
     // Horse neck & head
-    const hNeck = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.32, 0.22), horseMat);
+    const hNeck = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.34, 0.22), horseMat);
     hNeck.position.set(0, 0.54, 0.3);
     hNeck.rotation.x = -Math.PI / 6;
     hNeck.castShadow = true;
@@ -1219,17 +1605,19 @@ function createVoxelUnit(type, team) {
     hHead.name = "horseHead";
     horseGroup.add(hHead);
 
+    // Steel Champron (horse face armor plate)
+    const champron = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.18, 0.06), steelMat);
+    champron.position.set(0, 0.7, 0.56);
+    horseGroup.add(champron);
+
     // Mane
     const hMane = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.14), horseManeMat);
     hMane.position.set(0, 0.56, 0.16);
     horseGroup.add(hMane);
 
-    // Horse legs
+    // 4 Horse Legs
     const legCoords = [
-      [-0.16, -0.1], // Back Left
-      [0.16, -0.1],  // Back Right
-      [-0.16, 0.2],  // Front Left
-      [0.16, 0.2]   // Front Right
+      [-0.16, -0.1], [0.16, -0.1], [-0.16, 0.2], [0.16, 0.2]
     ];
     legCoords.forEach(([lx, lz]) => {
       const leg = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.22, 0.09), horseMat);
@@ -1237,302 +1625,418 @@ function createVoxelUnit(type, team) {
       leg.castShadow = true;
       horseGroup.add(leg);
 
-      const hoof = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.04, 0.11), horseHoofMat);
+      const hoof = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.04, 0.11), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }));
       hoof.position.set(lx, 0.02, lz);
       horseGroup.add(hoof);
     });
 
     group.add(horseGroup);
 
-    // Cavalry Rider
+    // Armored Knight Rider
     const riderGroup = new THREE.Group();
     riderGroup.position.set(0, 0.48, -0.04);
 
-    // Rider torso
-    const rTorso = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.22), tunicMat);
+    const rTorso = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.22), steelMat);
     rTorso.position.set(0, 0.17, 0);
     rTorso.castShadow = true;
     riderGroup.add(rTorso);
 
-    // Rider head
     const rHead = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), skinMat);
     rHead.position.set(0, 0.45, 0);
     rHead.castShadow = true;
     riderGroup.add(rHead);
 
-    // Rider helmet
-    const rHelmetMat = new THREE.MeshStandardMaterial({ color: helmetColor, roughness: 0.3, metalness: 0.7 });
-    const rHelmet = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.09, 0.26), rHelmetMat);
+    const rHelmet = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.1, 0.26), steelMat);
     rHelmet.position.set(0, 0.56, 0);
-    rHelmet.castShadow = true;
     riderGroup.add(rHelmet);
 
-    // Lance (right hand)
+    // Long Jousting Lance with pennon banner
     const lanceGroup = new THREE.Group();
     lanceGroup.position.set(0.24, 0.17, 0.12);
-    lanceGroup.rotation.x = -Math.PI / 10; // angled forward
+    lanceGroup.rotation.x = -Math.PI / 10;
 
-    // Wood shaft
-    const lShaft = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 1.0), woodMat);
-    lShaft.position.set(0, 0, 0.15);
+    const lShaft = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 1.1), woodMat);
+    lShaft.position.set(0, 0, 0.2);
     lShaft.castShadow = true;
     lanceGroup.add(lShaft);
 
-    // Lance tip
-    const lTip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.18), steelMat);
-    lTip.position.set(0, 0, 0.7);
+    const lTip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.2), steelMat);
+    lTip.position.set(0, 0, 0.78);
     lanceGroup.add(lTip);
 
-    // Lance Guard
-    const lGuard = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.08), goldMat);
-    lGuard.position.set(0, 0, -0.12);
-    lanceGroup.add(lGuard);
+    const pennon = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.22), tunicMat);
+    pennon.position.set(0, -0.08, 0.65);
+    lanceGroup.add(pennon);
 
     riderGroup.add(lanceGroup);
-
     group.add(riderGroup);
+
   } else if (type === 'HeavyGuard') {
-    // Ağır Muhafız — geniş gövde, omuz zırhı, kule kalkan
-    const helmetMat2 = new THREE.MeshStandardMaterial({ color: 0x5a6a78, roughness: 0.2, metalness: 0.9 });
-    // Bacaklar (kalın)
+    // Fortress Tower Guardian (Heavy Gothic plate armor, tower shield, spiked warhammer)
     [-0.16, 0.16].forEach((lx, idx) => {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.18), steelMat);
-      leg.position.set(lx, 0.12, 0); leg.castShadow = true; 
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.18), darkSteelMat);
+      leg.position.set(lx, 0.12, 0);
+      leg.castShadow = true; 
       leg.name = idx === 0 ? "legL" : "legR";
       group.add(leg);
     });
-    // Gövde (çok geniş)
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.46, 0.32), steelMat);
-    torso.position.set(0, 0.48, 0); torso.castShadow = true; group.add(torso);
-    // Takım renk çizgisi
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.46, 0.32), darkSteelMat);
+    torso.position.set(0, 0.48, 0);
+    torso.castShadow = true;
+    group.add(torso);
+
     const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.08, 0.33), tunicMat);
-    stripe.position.set(0, 0.48, 0); group.add(stripe);
-    // Omuz zırhları
+    stripe.position.set(0, 0.48, 0);
+    group.add(stripe);
+
+    // Heavy Pauldrons (Shoulder Armor)
     [[-0.36, 0.66], [0.36, 0.66]].forEach(([ox, oy]) => {
-      const pad = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.32), helmetMat2);
-      pad.position.set(ox, oy, 0); pad.castShadow = true; group.add(pad);
+      const pad = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.32), steelMat);
+      pad.position.set(ox, oy, 0);
+      pad.castShadow = true;
+      group.add(pad);
     });
-    // Baş
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.28, 0.3), new THREE.MeshStandardMaterial({ color: 0xffd1a4, roughness: 0.8 }));
-    head.position.set(0, 0.83, 0); head.castShadow = true; group.add(head);
-    // Kask (tam kafes miğfer)
-    const kask = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.28, 0.36), helmetMat2);
-    kask.position.set(0, 0.97, 0); kask.castShadow = true; group.add(kask);
-    // Kule kalkan
-    const kKalkan = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.6, 0.36), new THREE.MeshStandardMaterial({ color: shieldColor, roughness: 0.8 }));
-    kKalkan.position.set(-0.38, 0.5, 0.1); kKalkan.castShadow = true; group.add(kKalkan);
-    const kTrim = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.64, 0.04), steelMat);
-    kTrim.position.set(-0.39, 0.5, 0.3); group.add(kTrim);
-    const kIcon = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.14), tunicMat);
-    kIcon.position.set(-0.37, 0.5, 0.1); group.add(kIcon);
-    // Çekiç (sağ el)
-    const hammerHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.46), woodMat);
-    hammerHandle.position.set(0.36, 0.5, 0.12); group.add(hammerHandle);
-    const hammerHead = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.22, 0.16), steelMat);
-    hammerHead.position.set(0.36, 0.5, 0.36); group.add(hammerHead);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.28, 0.3), skinMat);
+    head.position.set(0, 0.83, 0);
+    head.castShadow = true;
+    group.add(head);
+
+    // Full Bascinet Helmet
+    const kask = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.28, 0.36), darkSteelMat);
+    kask.position.set(0, 0.97, 0);
+    kask.castShadow = true;
+    group.add(kask);
+
+    const visorSlit = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.04, 0.08), goldMat);
+    visorSlit.position.set(0, 0.94, 0.17);
+    group.add(visorSlit);
+
+    // Heavy Oak & Steel Tower Shield
+    const kKalkan = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.64, 0.38), woodMat);
+    kKalkan.position.set(-0.38, 0.5, 0.1);
+    kKalkan.castShadow = true;
+    group.add(kKalkan);
+
+    const kTrim = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.68, 0.04), steelMat);
+    kTrim.position.set(-0.39, 0.5, 0.3);
+    group.add(kTrim);
+
+    const kBoss = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.16, 0.16), goldMat);
+    kBoss.position.set(-0.37, 0.5, 0.1);
+    group.add(kBoss);
+
+    // Heavy Spiked Warhammer (right hand)
+    const hammerHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.48), woodMat);
+    hammerHandle.position.set(0.36, 0.5, 0.12);
+    group.add(hammerHandle);
+
+    const hammerHead = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.24, 0.16), darkSteelMat);
+    hammerHead.position.set(0.36, 0.5, 0.38);
+    group.add(hammerHead);
+
+    const hammerSpike = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.1), steelMat);
+    hammerSpike.position.set(0.36, 0.5, 0.48);
+    group.add(hammerSpike);
 
   } else if (type === 'Knight') {
-    // Şövalye — parlak plaka zırh, tüylü miğfer, iki elli kılıç
-    const plateMat = new THREE.MeshStandardMaterial({ color: 0xccd9e8, roughness: 0.15, metalness: 0.95 });
-    const plumeMat2 = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0xffd700 : 0xff6600, emissive: 0x332200, emissiveIntensity: 0.3 });
-    // Bacaklar
+    // Champion Knight (Gleaming plate armor, greathelm with golden plumage, double-handed Claymore)
     [-0.14, 0.14].forEach((lx, idx) => {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.22, 0.14), plateMat);
-      leg.position.set(lx, 0.11, 0); leg.castShadow = true;
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.22, 0.14), steelMat);
+      leg.position.set(lx, 0.11, 0);
+      leg.castShadow = true;
       leg.name = idx === 0 ? "legL" : "legR";
       group.add(leg);
     });
-    // Gövde (daha büyük)
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.46, 0.28), plateMat);
-    torso.position.set(0, 0.45, 0); torso.castShadow = true; group.add(torso);
-    const tunicOver = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.2, 0.29), tunicMat);
-    tunicOver.position.set(0, 0.34, 0); group.add(tunicOver);
-    // Baş
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), new THREE.MeshStandardMaterial({ color: 0xffd1a4, roughness: 0.8 }));
-    head.position.set(0, 0.8, 0); head.castShadow = true; group.add(head);
-    // Miğfer (yüz siperli)
-    const helmetBase = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.24, 0.34), plateMat);
-    helmetBase.position.set(0, 0.93, 0); helmetBase.castShadow = true; group.add(helmetBase);
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.1, 0.08), plateMat);
-    visor.position.set(0, 0.88, 0.2); group.add(visor);
-    // Tüy/Sorguç
-    const plumeTop = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.08), plumeMat2);
-    plumeTop.position.set(0, 1.1, 0); group.add(plumeTop);
-    const plumeMid = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, 0.12), plumeMat2);
-    plumeMid.position.set(0, 1.04, -0.04); group.add(plumeMid);
-    // Uzun kılıç (iki elle)
-    const longBlade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.62, 0.1), steelMat);
-    longBlade.position.set(0.3, 0.65, 0.12); longBlade.rotation.z = 0.18; group.add(longBlade);
-    const longGuard = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.08), goldMat);
-    longGuard.position.set(0.3, 0.36, 0.12); group.add(longGuard);
-    const longHandle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.05), woodMat);
-    longHandle.position.set(0.3, 0.28, 0.12); group.add(longHandle);
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.46, 0.28), steelMat);
+    torso.position.set(0, 0.45, 0);
+    torso.castShadow = true;
+    group.add(torso);
+
+    const tabard = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.29), tunicMat);
+    tabard.position.set(0, 0.34, 0);
+    group.add(tabard);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), skinMat);
+    head.position.set(0, 0.8, 0);
+    head.castShadow = true;
+    group.add(head);
+
+    // Ornate Greathelm
+    const helmetBase = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.26, 0.34), steelMat);
+    helmetBase.position.set(0, 0.94, 0);
+    helmetBase.castShadow = true;
+    group.add(helmetBase);
+
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.1, 0.08), goldMat);
+    visor.position.set(0, 0.88, 0.2);
+    group.add(visor);
+
+    // Billowing Royal Crest Plume
+    const plumeTop = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.08), goldMat);
+    plumeTop.position.set(0, 1.12, 0);
+    group.add(plumeTop);
+
+    const plumeMid = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 0.14), tunicMat);
+    plumeMid.position.set(0, 1.06, -0.05);
+    group.add(plumeMid);
+
+    // Two-Handed Steel Claymore
+    const longBlade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.68, 0.1), steelMat);
+    longBlade.position.set(0.3, 0.68, 0.12);
+    longBlade.rotation.z = 0.18;
+    group.add(longBlade);
+
+    const longGuard = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.06, 0.08), goldMat);
+    longGuard.position.set(0.3, 0.36, 0.12);
+    group.add(longGuard);
+
+    const longHandle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.16, 0.05), leatherMat);
+    longHandle.position.set(0.3, 0.26, 0.12);
+    group.add(longHandle);
+
+    const pommel = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.08), goldMat);
+    pommel.position.set(0.3, 0.16, 0.12);
+    group.add(pommel);
 
   } else if (type === 'Catapult') {
-    // Mancınık — tahta kuşatma makinesi (insansız)
-    const darkWood = new THREE.MeshStandardMaterial({ color: 0x4a2e10, roughness: 0.9 });
-    const steelBolt = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4, metalness: 0.6 });
-    // Platform
-    const base = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.07, 0.52), darkWood);
-    base.position.set(0, 0.035, 0); base.castShadow = true; group.add(base);
-    // Sol destek
-    const suppL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.34, 0.07), darkWood);
-    suppL.position.set(-0.24, 0.22, 0); suppL.castShadow = true; group.add(suppL);
-    // Sağ destek
-    const suppR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.34, 0.07), darkWood);
-    suppR.position.set(0.24, 0.22, 0); suppR.castShadow = true; group.add(suppR);
-    // Üst çapraz kiriş
-    const crossBeam = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 0.07), darkWood);
-    crossBeam.position.set(0, 0.37, 0); group.add(crossBeam);
-    // Fırlatma kolu (çapraz)
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.72, 0.06), darkWood);
-    arm.position.set(0, 0.55, 0.08);
+    // Siege Onager (Heavy timber frame, iron brackets, stone boulder, spoke wheels)
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.08, 0.54), woodMat);
+    base.position.set(0, 0.04, 0);
+    base.castShadow = true;
+    group.add(base);
+
+    const suppL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.36, 0.08), woodMat);
+    suppL.position.set(-0.24, 0.24, 0);
+    suppL.castShadow = true;
+    group.add(suppL);
+
+    const suppR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.36, 0.08), woodMat);
+    suppR.position.set(0.24, 0.24, 0);
+    suppR.castShadow = true;
+    group.add(suppR);
+
+    const crossBeam = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.07, 0.08), woodMat);
+    crossBeam.position.set(0, 0.39, 0);
+    group.add(crossBeam);
+
+    // Tension Throwing Arm
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.74, 0.06), woodMat);
+    arm.position.set(0, 0.56, 0.08);
     arm.rotation.x = -Math.PI / 5;
-    arm.castShadow = true; group.add(arm);
-    // Kova (arm ucunda)
-    const bucket = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.16), darkWood);
-    bucket.position.set(0, 0.92, 0.3); group.add(bucket);
-    // Taş mermi
-    const stone = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.95 }));
-    stone.position.set(0, 1.0, 0.3); group.add(stone);
-    // Tekerlekler
-    [[-0.36, -0.18], [-0.36, 0.18], [0.36, -0.18], [0.36, 0.18]].forEach(([wx, wz], idx) => {
-      const wheel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.18, 0.18), darkWood);
-      wheel.position.set(wx, 0.09, wz); 
+    arm.castShadow = true;
+    group.add(arm);
+
+    // Sling Bucket
+    const bucket = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.18), leatherMat);
+    bucket.position.set(0, 0.94, 0.3);
+    group.add(bucket);
+
+    // Heavy Stone Boulder
+    const stone = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.95 }));
+    stone.position.set(0, 1.02, 0.3);
+    group.add(stone);
+
+    // Iron-rimmed Wheels
+    [[-0.37, -0.18], [-0.37, 0.18], [0.37, -0.18], [0.37, 0.18]].forEach(([wx, wz], idx) => {
+      const wheel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.2), woodMat);
+      wheel.position.set(wx, 0.1, wz);
       wheel.name = "wheel_" + idx;
       group.add(wheel);
-      const axle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), steelBolt);
-      axle.position.set(wx, 0.09, wz); group.add(axle);
+
+      const axle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), darkSteelMat);
+      axle.position.set(wx, 0.1, wz);
+      group.add(axle);
     });
-    // Takım rengi şerit
-    const bandMat = new THREE.MeshStandardMaterial({ color: tunicColor, emissive: tunicColor, emissiveIntensity: 0.25 });
-    const band = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.04, 0.54), bandMat);
-    band.position.set(0, 0.07, 0); group.add(band);
+
+    // Faction Banner Plaque
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.05, 0.56), tunicMat);
+    band.position.set(0, 0.08, 0);
+    group.add(band);
 
   } else if (type === 'Captain') {
-    // Kaptan — pelerin, sorguçlu miğfer, kılıç
-    const helmetMat3 = new THREE.MeshStandardMaterial({ color: helmetColor, roughness: 0.3, metalness: 0.7 });
-    const capeMat = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x003399 : 0x880011, roughness: 0.7 });
-    // Bacaklar
+    // Noble Lord Commander (Gilded armor, velvet mantle with fur trim, gold royal crown helm, ornate gilded sword)
+    const capeMat = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x1e3a8a : 0x7f1d1d, roughness: 0.75 });
+    const furTrimMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.95 });
+
     [-0.13, 0.13].forEach((lx, idx) => {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.12), tunicMat);
-      leg.position.set(lx, 0.11, 0); leg.castShadow = true;
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.12), steelMat);
+      leg.position.set(lx, 0.11, 0);
+      leg.castShadow = true;
       leg.name = idx === 0 ? "legL" : "legR";
       group.add(leg);
     });
-    // Pelerin (arkada)
-    const cape = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.06), capeMat);
-    cape.position.set(0, 0.45, -0.18); cape.castShadow = true; group.add(cape);
-    const capeLow = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.22, 0.07), capeMat);
-    capeLow.position.set(0, 0.2, -0.16); group.add(capeLow);
-    // Gövde
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.44, 0.28), tunicMat);
-    torso.position.set(0, 0.44, 0); torso.castShadow = true; group.add(torso);
-    // Altın kemer
-    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.06, 0.29), goldMat);
-    belt.position.set(0, 0.28, 0); group.add(belt);
-    // Baş
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), new THREE.MeshStandardMaterial({ color: 0xffd1a4, roughness: 0.8 }));
-    head.position.set(0, 0.8, 0); head.castShadow = true; group.add(head);
-    // Miğfer
-    const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.12, 0.32), helmetMat3);
-    helmet.position.set(0, 0.93, 0); group.add(helmet);
-    // Büyük tüy sorgucu
-    const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.06), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-    p1.position.set(0, 1.08, 0); group.add(p1);
-    const p2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.1), new THREE.MeshStandardMaterial({ color: tunicColor, emissive: tunicColor, emissiveIntensity: 0.3 }));
-    p2.position.set(0, 1.08, -0.06); group.add(p2);
-    // Kılıç (yüksek tutulmuş)
-    const capBlade = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.44, 0.08), steelMat);
-    capBlade.position.set(0.3, 0.68, 0.1); group.add(capBlade);
-    const capGuard = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.06), goldMat);
-    capGuard.position.set(0.3, 0.47, 0.1); group.add(capGuard);
-    const capHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.1, 0.04), woodMat);
-    capHandle.position.set(0.3, 0.4, 0.1); group.add(capHandle);
-    // Kalkan
-    const capShield = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.34, 0.24), new THREE.MeshStandardMaterial({ color: shieldColor, roughness: 0.8 }));
-    capShield.position.set(-0.28, 0.44, 0.08); group.add(capShield);
-    const capShieldTrim = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.24), goldMat);
-    capShieldTrim.position.set(-0.28, 0.61, 0.08); group.add(capShieldTrim);
+
+    // Velvet Mantle with Fur Collar (Cape)
+    const cape = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.52, 0.06), capeMat);
+    cape.position.set(0, 0.46, -0.18);
+    cape.castShadow = true;
+    group.add(cape);
+
+    const furCollar = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.12, 0.14), furTrimMat);
+    furCollar.position.set(0, 0.68, -0.1);
+    group.add(furCollar);
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.44, 0.28), goldMat);
+    torso.position.set(0, 0.44, 0);
+    torso.castShadow = true;
+    group.add(torso);
+
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.06, 0.29), leatherMat);
+    belt.position.set(0, 0.28, 0);
+    group.add(belt);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), skinMat);
+    head.position.set(0, 0.8, 0);
+    head.castShadow = true;
+    group.add(head);
+
+    // Royal Gilded Crown Helmet
+    const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.14, 0.32), goldMat);
+    helmet.position.set(0, 0.94, 0);
+    group.add(helmet);
+
+    const crownPoint = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.08), goldMat);
+    crownPoint.position.set(0, 1.04, 0.14);
+    group.add(crownPoint);
+
+    // Twin Royal Feathers
+    const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.06), furTrimMat);
+    p1.position.set(0, 1.1, 0);
+    group.add(p1);
+
+    const p2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.1), tunicMat);
+    p2.position.set(0, 1.1, -0.06);
+    group.add(p2);
+
+    // Gilded Royal Sword
+    const capBlade = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.46, 0.08), steelMat);
+    capBlade.position.set(0.3, 0.7, 0.1);
+    group.add(capBlade);
+
+    const capGuard = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.05, 0.06), goldMat);
+    capGuard.position.set(0.3, 0.48, 0.1);
+    group.add(capGuard);
+
+    const capHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.1, 0.04), leatherMat);
+    capHandle.position.set(0.3, 0.41, 0.1);
+    group.add(capHandle);
+
+    // Lion Crest Heater Shield
+    const capShield = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.36, 0.26), tunicMat);
+    capShield.position.set(-0.28, 0.44, 0.08);
+    group.add(capShield);
+
+    const capShieldTrim = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.26), goldMat);
+    capShieldTrim.position.set(-0.28, 0.62, 0.08);
+    group.add(capShieldTrim);
+
+    const capLion = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.14), goldMat);
+    capLion.position.set(-0.28, 0.44, 0.08);
+    group.add(capLion);
 
   } else if (type === 'Mage') {
-    // Büyücü — uzun robe, sivri şapka, parlak asa
-    const robeMat = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x1a0055 : 0x550011, roughness: 0.7 });
-    const robeAccent = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x6600ff : 0xff3300, emissive: team === 'blue' ? 0x330088 : 0x660000, emissiveIntensity: 0.5 });
-    const crystalMat = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x00f0ff : 0xff3300, emissive: team === 'blue' ? 0x00a0cc : 0xcc1100, emissiveIntensity: 0.9, transparent: true, opacity: 0.85 });
-    // Etek (geniş)
-    const robe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.28, 0.28), robeMat);
-    robe.position.set(0, 0.14, 0); robe.castShadow = true; group.add(robe);
-    // Üst robe
-    const robeTorso = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.42, 0.26), robeMat);
-    robeTorso.position.set(0, 0.44, 0); robeTorso.castShadow = true; group.add(robeTorso);
-    // Yıldız motifi
-    const star = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.1, 0.27), robeAccent);
-    star.position.set(0, 0.44, 0); group.add(star);
-    // Baş
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.25), new THREE.MeshStandardMaterial({ color: 0xffd1a4, roughness: 0.8 }));
-    head.position.set(0, 0.78, 0); head.castShadow = true; group.add(head);
-    // Sivri şapka (üç parça)
-    const hatBrim = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.06, 0.38), robeMat);
-    hatBrim.position.set(0, 0.9, 0); group.add(hatBrim);
-    const hatMid = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.22), robeMat);
-    hatMid.position.set(0, 1.02, 0); group.add(hatMid);
-    const hatTop = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), robeMat);
-    hatTop.position.set(0, 1.19, 0); group.add(hatTop);
-    const hatTip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.1, 0.04), robeAccent);
-    hatTip.position.set(0, 1.33, 0); group.add(hatTip);
-    // Asa gövdesi
-    const staffShaft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.88, 0.04), woodMat);
-    staffShaft.position.set(0.28, 0.44, 0.08); group.add(staffShaft);
-    // Kristal küre (asa ucu)
-    const orb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), crystalMat);
-    orb.position.set(0.28, 0.92, 0.08); 
+    // Court Archmage (Mystical runic robes, hooded cowl, spellbook, fire ember staff)
+    const robeMat = new THREE.MeshStandardMaterial({ color: team === 'blue' ? 0x172554 : 0x450a0a, roughness: 0.75 });
+    const robeAccent = new THREE.MeshStandardMaterial({ color: goldColor, roughness: 0.3, metalness: 0.8 });
+    const crystalMat = new THREE.MeshStandardMaterial({
+      color: team === 'blue' ? 0x60a5fa : 0xf97316,
+      emissive: team === 'blue' ? 0x3b82f6 : 0xea580c,
+      emissiveIntensity: 1.2,
+      roughness: 0.2
+    });
+
+    const robe = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.3, 0.3), robeMat);
+    robe.position.set(0, 0.15, 0);
+    robe.castShadow = true;
+    group.add(robe);
+
+    const robeTorso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.44, 0.28), robeMat);
+    robeTorso.position.set(0, 0.46, 0);
+    robeTorso.castShadow = true;
+    group.add(robeTorso);
+
+    // Gold Runic Sash
+    const sash = new THREE.Mesh(new THREE.BoxGeometry(0.39, 0.08, 0.29), robeAccent);
+    sash.position.set(0, 0.46, 0);
+    group.add(sash);
+
+    // Leather Spellbook on belt
+    const grimoire = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.14), leatherMat);
+    grimoire.position.set(-0.21, 0.36, 0.04);
+    group.add(grimoire);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.26), skinMat);
+    head.position.set(0, 0.78, 0);
+    head.castShadow = true;
+    group.add(head);
+
+    // Wizard Hat (Brim, Cone, Tip)
+    const hatBrim = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.4), robeMat);
+    hatBrim.position.set(0, 0.9, 0);
+    group.add(hatBrim);
+
+    const hatMid = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.24), robeMat);
+    hatMid.position.set(0, 1.02, 0);
+    group.add(hatMid);
+
+    const hatTop = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.2, 0.12), robeMat);
+    hatTop.position.set(0, 1.2, 0);
+    group.add(hatTop);
+
+    const hatTip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.1, 0.05), robeAccent);
+    hatTip.position.set(0, 1.34, 0);
+    group.add(hatTip);
+
+    // Carved Runic Wooden Staff
+    const staffShaft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.92, 0.04), woodMat);
+    staffShaft.position.set(0.28, 0.46, 0.08);
+    group.add(staffShaft);
+
+    // Glowing Fiery/Mystic Crystal Orb
+    const orb = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.14), crystalMat);
+    orb.position.set(0.28, 0.96, 0.08); 
     orb.name = "mageOrb";
     group.add(orb);
-    const orbGlow = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), new THREE.MeshStandardMaterial({
-      color: team === 'blue' ? 0x00f0ff : 0xff3300,
-      emissive: team === 'blue' ? 0x00a0cc : 0xcc1100,
-      emissiveIntensity: 0.6,
-      transparent: true, opacity: 0.3
-    }));
-    orbGlow.position.set(0.28, 0.92, 0.08); 
-    orbGlow.name = "mageOrbGlow";
-    group.add(orbGlow);
 
-    // Mistik PointLight parıltısı
-    const staffLight = new THREE.PointLight(team === 'blue' ? 0x00f0ff : 0xff3300, 1.0, 3.5);
-    staffLight.position.set(0.28, 0.92, 0.08);
+    const staffLight = new THREE.PointLight(team === 'blue' ? 0x60a5fa : 0xf97316, 1.2, 3.5);
+    staffLight.position.set(0.28, 0.96, 0.08);
     staffLight.name = "staffLight";
     group.add(staffLight);
   }
 
-  // Set unit standing on the grid (y = 0 so they align perfectly on ground)
+  // Set unit standing on the grid
   group.position.y = 0.0;
 
   return group;
 }
 
-// Spawn exploding voxel particles
+// Spawn exploding medieval voxel particles (stone chips, sparks, wood splinters)
 function spawnDebris(gridX, gridZ, team) {
-  let color = team === 'blue' ? 0x00f0ff : 0xff0055;
-  if (team === 'gold') color = 0xffd700; // Gold spark color for critical hits
+  let isGold = team === 'gold';
+  const count = isGold ? 32 + Math.floor(Math.random() * 12) : 16 + Math.floor(Math.random() * 8);
 
-  const count = team === 'gold' ? 32 + Math.floor(Math.random() * 12) : 15 + Math.floor(Math.random() * 8);
+  // Materials palette: Stone grey, forged iron, splinter wood, or gold sparks
+  const debrisColors = isGold 
+    ? [0xffd700, 0xffaa00, 0xfff0aa] 
+    : (team === 'blue' ? [0x3b82f6, 0xb0bec5, 0x5c3d2e] : [0xef4444, 0xb0bec5, 0x5c3d2e]);
 
   for (let i = 0; i < count; i++) {
-    const geo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+    const color = debrisColors[Math.floor(Math.random() * debrisColors.length)];
+    const geo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
     const mat = new THREE.MeshStandardMaterial({
       color: color,
-      emissive: color,
-      emissiveIntensity: team === 'gold' ? 1.5 : 0.4,
-      roughness: 0.5,
-      metalness: team === 'gold' ? 0.9 : 0.1
+      emissive: isGold ? 0xffaa00 : 0x000000,
+      emissiveIntensity: isGold ? 1.5 : 0.0,
+      roughness: isGold ? 0.2 : 0.85,
+      metalness: isGold ? 0.9 : 0.3
     });
 
     const mesh = new THREE.Mesh(geo, mat);
     mesh.castShadow = true;
 
-    // Spawn cluster at unit visual heights
     mesh.position.set(
       gridX - 5.5 + (Math.random() - 0.5) * 0.5,
       0.4 + Math.random() * 0.8,
@@ -1543,10 +2047,10 @@ function spawnDebris(gridX, gridZ, team) {
 
     debrisList.push({
       mesh,
-      vx: (Math.random() - 0.5) * (team === 'gold' ? 7.0 : 4.5),
-      vy: Math.random() * (team === 'gold' ? 7.0 : 4.5) + (team === 'gold' ? 4.5 : 3.0), // Burst up higher if gold
-      vz: (Math.random() - 0.5) * (team === 'gold' ? 7.0 : 4.5),
-      life: (team === 'gold' ? 1.2 : 0.9) + Math.random() * 0.4
+      vx: (Math.random() - 0.5) * (isGold ? 7.0 : 4.5),
+      vy: Math.random() * (isGold ? 7.0 : 4.5) + (isGold ? 4.5 : 3.0),
+      vz: (Math.random() - 0.5) * (isGold ? 7.0 : 4.5),
+      life: (isGold ? 1.2 : 0.9) + Math.random() * 0.4
     });
   }
 }
@@ -1558,47 +2062,47 @@ function spawnProjectile(attackerType, team, startX, startZ, targetX, targetZ, o
   let arc = 0;
   let duration = 0.55; 
 
-  const color = team === 'blue' ? 0x00f0ff : 0xff0055;
+  const color = team === 'blue' ? 0x60a5fa : 0xf97316;
 
   if (attackerType === 'Archer') {
     // Arrow projectile
     geometry = new THREE.BoxGeometry(0.04, 0.04, 0.28);
-    material = new THREE.MeshStandardMaterial({ color: 0xa66f3c, roughness: 0.8 });
+    material = new THREE.MeshStandardMaterial({ color: 0x5c3d2e, roughness: 0.85 });
     const arrow = new THREE.Mesh(geometry, material);
     arrow.castShadow = true;
     group.add(arrow);
     
     // Arrow tip
-    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.08), new THREE.MeshStandardMaterial({ color: 0xccd9e8, metalness: 0.8 }));
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.08), new THREE.MeshStandardMaterial({ color: 0xc8d6e5, metalness: 0.85 }));
     tip.position.z = 0.16;
     group.add(tip);
 
     arc = 0.8; 
     duration = 0.5;
   } else if (attackerType === 'Mage') {
-    // Magic plasma sphere
-    geometry = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+    // Magic fiery plasma / arcane sphere
+    geometry = new THREE.BoxGeometry(0.16, 0.16, 0.16);
     material = new THREE.MeshStandardMaterial({ 
       color: color, 
       emissive: color, 
-      emissiveIntensity: 1.2,
+      emissiveIntensity: 1.4,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.9
     });
     const plasma = new THREE.Mesh(geometry, material);
     group.add(plasma);
 
     // Glowing core pointlight
-    const projLight = new THREE.PointLight(color, 1.2, 3.0);
+    const projLight = new THREE.PointLight(color, 1.3, 3.5);
     projLight.name = "projLight";
     group.add(projLight);
 
-    arc = 0.25; 
+    arc = 0.3; 
     duration = 0.65;
   } else if (attackerType === 'Catapult') {
-    // Catapult boulder projectile
-    geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-    material = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.9 });
+    // Catapult stone boulder projectile
+    geometry = new THREE.BoxGeometry(0.28, 0.28, 0.28);
+    material = new THREE.MeshStandardMaterial({ color: 0x4a4744, roughness: 0.95 });
     const boulder = new THREE.Mesh(geometry, material);
     boulder.castShadow = true;
     group.add(boulder);
@@ -1634,16 +2138,16 @@ function spawnProjectile(attackerType, team, startX, startZ, targetX, targetZ, o
 
 // Spawn unit-specific death visual effect
 function spawnDeathEffect(unitType, gridX, gridZ, team) {
-  const color = team === 'blue' ? 0x00f0ff : 0xff0055;
+  const color = team === 'blue' ? 0x60a5fa : 0xf97316;
   
   if (unitType === 'Mage') {
-    // Magic ring particle explosion
+    // Arcane ring particle explosion
     const particleCount = 28;
     for (let i = 0; i < particleCount; i++) {
       const geo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
       const mat = new THREE.MeshStandardMaterial({
-        color: team === 'blue' ? 0x8800ff : 0xff0055,
-        emissive: team === 'blue' ? 0x5500aa : 0xaa0033,
+        color: team === 'blue' ? 0x3b82f6 : 0xea580c,
+        emissive: team === 'blue' ? 0x1d4ed8 : 0xc2410c,
         emissiveIntensity: 1.5,
         transparent: true
       });
@@ -1662,21 +2166,20 @@ function spawnDeathEffect(unitType, gridX, gridZ, team) {
       });
     }
     // Fade away PointLight
-    const deathLight = new THREE.PointLight(team === 'blue' ? 0x8800ff : 0xff0055, 2.0, 5.0);
+    const deathLight = new THREE.PointLight(team === 'blue' ? 0x3b82f6 : 0xf97316, 2.0, 5.0);
     deathLight.position.set(gridX - 5.5, 0.4, gridZ - 5.5);
     scene.add(deathLight);
     
-    const fade = () => {
-      deathLight.intensity -= 0.15;
-      if (deathLight.intensity > 0) {
-        requestAnimationFrame(fade);
-      } else {
-        scene.remove(deathLight);
-      }
-    };
-    fade();
-
-  } else if (unitType === 'Catapult') {
+      const fade = () => {
+        deathLight.intensity -= 0.15;
+        if (deathLight.intensity > 0) {
+          requestAnimationFrame(fade);
+        } else {
+          scene.remove(deathLight);
+        }
+      };
+      requestAnimationFrame(fade);
+    } else if (unitType === 'Catapult') {
     // Splintered wood and dark smoke particles
     const particleCount = 24;
     for (let i = 0; i < particleCount; i++) {
@@ -1801,9 +2304,17 @@ function spawnDeathEffect(unitType, gridX, gridZ, team) {
 // INTERACTION & RAYCASTING
 // ==========================================
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  if (!camera || !renderer) return;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+  // Dynamically update camera base position for orientation changes
+  const preset = getCameraPreset();
+  cameraDefaultPosition.set(preset.x, preset.y, preset.z);
 }
 
 function onMouseMove(event) {
@@ -1829,9 +2340,37 @@ function onMouseMove(event) {
   }
 }
 
-function onClick(event) {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+// Touch & Mouse Disambiguation (Tap vs Drag/Pinch)
+let pointerStartX = 0;
+let pointerStartY = 0;
+let pointerStartTime = 0;
+let isPointerActive = false;
+
+function onPointerDown(event) {
+  isPointerActive = true;
+  pointerStartX = event.clientX;
+  pointerStartY = event.clientY;
+  pointerStartTime = performance.now();
+}
+
+function onPointerUp(event) {
+  if (!isPointerActive) return;
+  isPointerActive = false;
+
+  const dx = event.clientX - pointerStartX;
+  const dy = event.clientY - pointerStartY;
+  const dist = Math.hypot(dx, dy);
+  const duration = performance.now() - pointerStartTime;
+
+  // Threshold: if dragged more than 14px or held > 400ms, it was a camera rotation / pinch gesture
+  if (dist < 14 && duration < 400) {
+    processInteraction(event.clientX, event.clientY);
+  }
+}
+
+function processInteraction(clientX, clientY) {
+  mouse.x = (clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
 
@@ -1845,7 +2384,6 @@ function onClick(event) {
 
   // 2. Raycast against units
   const unitGroups = Object.values(unitMeshes);
-  // Collect all child meshes of unit groups
   const intersectableMeshes = [];
   unitGroups.forEach(g => {
     g.traverse(child => {
@@ -2401,7 +2939,48 @@ function animate() {
     ui.element.style.top = `${pos2D.y}px`;
   }
 
-  // ── 6. RENDER CALLS ───────────────────────────────────────────────────
+  // ── 6. UPDATE MEDIEVAL TORCHES, CROWD & EMBERS ────────────────────────
+  // Dynamic torch flickering
+  for (let i = 0; i < torchLights.length; i++) {
+    const tl = torchLights[i];
+    const base = tl.userData.baseIntensity || 1.35;
+    const flicker = Math.sin(time * 0.012 + i * 1.5) * 0.25 + Math.sin(time * 0.027 + i * 3.1) * 0.12;
+    tl.intensity = Math.max(0.6, base + flicker);
+  }
+
+  // Living spectator crowd idle animations
+  for (let i = 0; i < spectatorList.length; i++) {
+    const sp = spectatorList[i];
+    const bounce = Math.sin(time * sp.speed + sp.offset) * 0.05;
+    sp.group.position.y = sp.baseY + Math.max(0, bounce);
+
+    if (sp.arm) {
+      // Occasional enthusiastic arm wave
+      const wave = Math.sin(time * sp.speed * 2.2 + sp.offset) * 0.45;
+      sp.arm.rotation.x = wave;
+    }
+  }
+
+  // Floating amber sparks & smoke embers drifting upwards
+  if (emberParticles && emberParticles.geometry) {
+    const positions = emberParticles.geometry.attributes.position.array;
+    for (let i = 1; i < positions.length; i += 3) {
+      positions[i] += dt * 1.6; // Rise upwards
+      // Random slight wind sway
+      positions[i - 1] += Math.sin(time * 0.001 + i) * dt * 0.2;
+      positions[i + 1] += Math.cos(time * 0.001 + i) * dt * 0.2;
+
+      // Cycle back down when rising above courtyard walls
+      if (positions[i] > 11.0) {
+        positions[i] = 0.5 + Math.random() * 1.5;
+        positions[i - 1] = (Math.random() - 0.5) * 20;
+        positions[i + 1] = (Math.random() - 0.5) * 20;
+      }
+    }
+    emberParticles.geometry.attributes.position.needsUpdate = true;
+  }
+
+  // ── 7. RENDER CALLS ───────────────────────────────────────────────────
   if (controls) controls.update();
   if (renderer && scene && camera) renderer.render(scene, camera);
 }

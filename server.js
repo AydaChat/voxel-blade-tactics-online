@@ -464,7 +464,9 @@ io.on('connection', (socket) => {
         turn: 1
       },
       vsAI: !!vsAI,
-      difficulty: difficulty || 'medium'
+      difficulty: difficulty || 'medium',
+      createdAt: Date.now(),
+      timeoutId: null
     };
 
     socket.join(code);
@@ -486,8 +488,46 @@ io.on('connection', (socket) => {
         roomCode: code
       });
     } else {
-      socket.emit('roomCreated', { code });
-      console.log(`Oda oluşturuldu: ${code} - Oyuncu: ${playerName}`);
+      // 1-minute (60 seconds) room timeout if no opponent joins
+      const ROOM_TIMEOUT_MS = 60000;
+      const timeoutId = setTimeout(() => {
+        const waitingRoom = rooms[code];
+        if (waitingRoom && waitingRoom.players.length < 2) {
+          console.log(`Oda zaman aşımına uğradı (1 dk doldu): ${code}`);
+          io.to(code).emit('roomTimeout', {
+            message: '1 dakika boyunca rakip bağlanmadığı için oda zaman aşımına uğradı ve kapatıldı.'
+          });
+          delete rooms[code];
+        }
+      }, ROOM_TIMEOUT_MS);
+
+      rooms[code].timeoutId = timeoutId;
+      const expiresAt = Date.now() + ROOM_TIMEOUT_MS;
+
+      socket.emit('roomCreated', { 
+        code, 
+        timeoutDuration: 60,
+        expiresAt 
+      });
+      console.log(`Oda oluşturuldu: ${code} - Oyuncu: ${playerName} (60s zaman aşımı devrede)`);
+    }
+  });
+
+  // Cancel room event (Host cancels match creation)
+  socket.on('cancelRoom', ({ roomCode } = {}) => {
+    if (!roomCode) return;
+    const cleanCode = roomCode.toUpperCase();
+    const room = rooms[cleanCode];
+
+    if (room && room.players.length === 1 && room.players[0].id === socket.id) {
+      if (room.timeoutId) {
+        clearTimeout(room.timeoutId);
+        room.timeoutId = null;
+      }
+      delete rooms[cleanCode];
+      socket.leave(cleanCode);
+      console.log(`Oda sahibi tarafından iptal edildi: ${cleanCode}`);
+      socket.emit('roomCancelled', { message: 'Oda oluşturma iptal edildi.' });
     }
   });
 
@@ -505,6 +545,13 @@ io.on('connection', (socket) => {
 
     if (room.players.length >= 2) {
       return socket.emit('errorMsg', { message: 'Oda dolu.' });
+    }
+
+    // Opponent connected in time -> clear waiting timeout
+    if (room.timeoutId) {
+      clearTimeout(room.timeoutId);
+      room.timeoutId = null;
+      console.log(`Oda zaman aşımı sayacı durduruldu: ${cleanCode}`);
     }
 
     // Add Player 2 as 'red'
@@ -681,6 +728,10 @@ io.on('connection', (socket) => {
       const playerIndex = room.players.findIndex(p => p.id === socket.id);
       
       if (playerIndex !== -1) {
+        if (room.timeoutId) {
+          clearTimeout(room.timeoutId);
+          room.timeoutId = null;
+        }
         // Notify the other player
         socket.to(code).emit('opponentDisconnected', {
           message: 'Rakibiniz oyundan ayrıldı.'

@@ -2,121 +2,138 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voxel & Blade: Çevrimiçi Taktik</title>
-  <!-- Google Fonts -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0b09">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Voxel &amp; Blade: Ortaçağ Savaş Arenası</title>
+  <!-- Google Fonts: Medieval & Royal -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700;900&family=MedievalSharp&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Cyberpunk Background Matrix Canvas (Optional / Styled in CSS) -->
-  <div class="cyber-grid-overlay"></div>
+  <!-- Medieval Castle Wall Atmosphere Overlay -->
+  <div class="medieval-arena-overlay"></div>
 
   <!-- LOBBY SCREEN -->
   <div id="lobby-screen" class="screen active">
-    <div class="lobby-card">
+    <div class="lobby-card medieval-frame">
       <div class="logo-container">
-        <h1 class="glitch-title" data-text="VOXEL &amp; BLADE">VOXEL &amp; BLADE</h1>
-        <p class="subtitle">ÇEVRİMİÇİ TAKTİK</p>
+        <div class="crest-icon">🛡️ ⚔️ 🛡️</div>
+        <h1 class="medieval-title">VOXEL &amp; BLADE</h1>
+        <p class="subtitle">ORTAÇAĞ SAVAŞ ARENASI</p>
       </div>
 
-      <!-- STEP 1: Kullanıcı Adı -->
+      <!-- STEP 1: Kullanıcı Adı / Lord Ünvanı -->
       <div id="username-step" class="lobby-form">
         <div class="step-label">
-          <span class="step-number">1</span>
-          <span class="step-title">KİMLİĞİNİ BELİRLE</span>
+          <span class="step-number">I</span>
+          <span class="step-title">KİMLİĞİNİ BİLDİR</span>
         </div>
         <div class="input-group">
-          <label for="username-input">KOMUTAN ADIN</label>
-          <input type="text" id="username-input" placeholder="ÖRN. SAVAŞÇI_42" maxlength="16" autocomplete="off">
+          <label for="username-input">LORD / ŞÖVALYE ADINIZ</label>
+          <input type="text" id="username-input" placeholder="ÖRN. SIR_GALAHAD" maxlength="16" autocomplete="off" autocapitalize="characters">
         </div>
-        <button id="username-confirm-btn" class="cyber-btn cyber-btn-primary">
-          <span class="btn-text">SAVAŞ ALANINA GİR ▶</span>
-          <span class="btn-glitch"></span>
+        <button id="username-confirm-btn" class="medieval-btn medieval-btn-primary">
+          <span class="btn-text">⚔️ ARENA MEYDANINA GİR</span>
         </button>
       </div>
 
-      <!-- STEP 2: Oda Seç (başlangıçta gizli) -->
+      <!-- STEP 2: Meydan Seç (başlangıçta gizli) -->
       <div id="room-step" class="lobby-form hidden">
         <div class="step-label">
-          <span class="step-number">2</span>
-          <span class="step-title">ODA SEÇ</span>
+          <span class="step-number">II</span>
+          <span class="step-title">DÜELLO MEYDANI SEÇ</span>
         </div>
         <div class="player-badge" id="player-badge">
-          <span class="badge-icon">⚔</span>
-          <span id="badge-username">KOMUTAN</span>
+          <span class="badge-icon">⚜️</span>
+          <span id="badge-username">SOYLU KOMUTAN</span>
         </div>
         <div class="input-group">
-          <label for="room-code-input">ODA KODUNU GİRİN</label>
-          <input type="text" id="room-code-input" placeholder="ÖRN. ABCD" maxlength="4" autocomplete="off">
+          <label for="room-code-input">DÜELLO MÜHRÜ (ODA KODU)</label>
+          <input type="text" id="room-code-input" placeholder="ÖRN. ABCD" maxlength="4" autocomplete="off" autocapitalize="characters">
         </div>
-        <button id="join-btn" class="cyber-btn cyber-btn-primary">
-          <span class="btn-text">MAÇA KATIL</span>
-          <span class="btn-glitch"></span>
+        <button id="join-btn" class="medieval-btn medieval-btn-primary">
+          <span class="btn-text">⚔️ MEYDANA KATIL</span>
         </button>
         <div class="divider">
           <span>VEYA</span>
         </div>
-        <button id="create-btn" class="cyber-btn cyber-btn-secondary">
-          <span class="btn-text">YENİ MAÇ OLUŞTUR</span>
-          <span class="btn-glitch"></span>
+        <button id="create-btn" class="medieval-btn medieval-btn-secondary">
+          <span class="btn-text">🏰 YENİ DÜELLO MEYDANI AÇ</span>
         </button>
         <div class="divider">
           <span>VEYA</span>
         </div>
-        <button id="ai-mode-btn" class="cyber-btn cyber-btn-accent" style="border-color: #ffb700; box-shadow: 0 0 10px rgba(255, 183, 0, 0.4);">
-          <span class="btn-text">🤖 YAPAY ZEKAYA KARŞI OYNA</span>
-          <span class="btn-glitch"></span>
+        <button id="ai-mode-btn" class="medieval-btn medieval-btn-accent">
+          <span class="btn-text">🤖 KALE MUHAFIZINA KARŞI DÜELLO</span>
         </button>
       </div>
 
       <!-- STEP 3: Yapay Zeka Zorluk Seçimi -->
       <div id="ai-difficulty-step" class="lobby-form hidden">
         <div class="step-label">
-          <span class="step-number">3</span>
-          <span class="step-title">ZORLUK SEÇİN</span>
+          <span class="step-number">III</span>
+          <span class="step-title">MUHAFIZ SEVİYESİ</span>
         </div>
         <div class="player-badge">
-          <span class="badge-icon">🤖</span>
-          <span style="color: #ffb700; text-shadow: 0 0 8px rgba(255,183,0,0.5);">BOT REKABTİ</span>
+          <span class="badge-icon">👑</span>
+          <span style="color: var(--gold-accent);">KALE DÜELLOSU</span>
         </div>
-        <button id="ai-easy-btn" class="cyber-btn" style="border: 1px solid var(--neon-green); box-shadow: var(--shadow-green); background: rgba(57, 255, 20, 0.1);">
-          <span class="btn-text" style="color: var(--neon-green);">KOLAY (ACEMİ)</span>
+        <button id="ai-easy-btn" class="medieval-btn medieval-btn-green">
+          <span class="btn-text">ACEMİ ŞÖVALYE (KOLAY)</span>
         </button>
-        <button id="ai-medium-btn" class="cyber-btn cyber-btn-accent">
-          <span class="btn-text">ORTA (MUHAFIZ)</span>
+        <button id="ai-medium-btn" class="medieval-btn medieval-btn-accent">
+          <span class="btn-text">KALE MUHAFIZI (ORTA)</span>
         </button>
-        <button id="ai-hard-btn" class="cyber-btn" style="border: 1px solid var(--neon-red); box-shadow: var(--shadow-red); background: rgba(255, 0, 60, 0.1);">
-          <span class="btn-text" style="color: var(--neon-red);">ZOR (EFSANE)</span>
+        <button id="ai-hard-btn" class="medieval-btn medieval-btn-red">
+          <span class="btn-text">EFSANE ŞAMPİYON (ZOR)</span>
         </button>
         <div class="divider"></div>
-        <button id="ai-back-btn" class="cyber-btn" style="padding: 0.5rem; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3);">
+        <button id="ai-back-btn" class="medieval-btn medieval-btn-back">
           <span class="btn-text">⬅ GERİ DÖN</span>
         </button>
       </div>
 
-      <div id="lobby-status" class="lobby-status">Komutan adınızı girin...</div>
-      <button id="guide-open-btn-lobby" class="cyber-btn cyber-btn-accent mt-4" style="width: 100%;">
-        <span class="btn-text">📖 KOMUTAN REHBERİ</span>
-        <span class="btn-glitch"></span>
+      <div id="lobby-status" class="lobby-status">Lord / Şövalye adınızı mühürleyin...</div>
+      <button id="guide-open-btn-lobby" class="medieval-btn medieval-btn-accent mt-4" style="width: 100%;">
+        <span class="btn-text">📜 BİRLİK KİTABI &amp; KILAVUZ</span>
       </button>
     </div>
   </div>
 
   <!-- WAITING LOBBY -->
   <div id="waiting-screen" class="screen">
-    <div class="lobby-card text-center">
-      <h2 class="neon-text-blue">MAÇ OLUŞTURULDU</h2>
-      <p class="desc">Aşağıdaki oda kodunu rakibinizle paylaşın:</p>
+    <div class="lobby-card medieval-frame text-center">
+      <h2 class="gold-text-title">DÜELLO MEYDANI AÇILDI</h2>
+      <p class="desc">Aşağıdaki meydan mührünü rakip şövalyeyle paylaşın:</p>
       <div class="room-code-display" id="display-room-code">----</div>
-      <div class="spinner-container">
-        <div class="cyber-spinner"></div>
+
+      <!-- 1-Minute Countdown Timer -->
+      <div class="waiting-timer-container">
+        <div class="waiting-timer-badge">
+          <span class="timer-icon">⏳</span>
+          <span class="timer-label">MEYDAN KAPANMA:</span>
+          <span id="waiting-countdown" class="timer-countdown">60s</span>
+        </div>
+        <div class="waiting-timer-bar">
+          <div id="waiting-timer-progress" class="waiting-timer-progress"></div>
+        </div>
       </div>
-      <p class="status-pulse">RAKİBİN BAĞLANMASI BEKLENİYOR...</p>
+
+      <div class="spinner-container">
+        <div class="medieval-spinner"></div>
+      </div>
+      <p class="status-pulse">⚔️ RAKİP ŞÖVALYENİN GELMESİ BEKLENİYOR... ⚔️</p>
+
+      <!-- Cancel Room Button -->
+      <button id="cancel-room-btn" class="medieval-btn medieval-btn-secondary mt-4" style="width: 100%;">
+        <span class="btn-text">✖ MEYDANI İPTAL ET</span>
+      </button>
     </div>
   </div>
 
@@ -132,43 +149,53 @@
       <!-- Top Banner (Turn & Match Info) -->
       <div class="hud-top-bar">
         <div class="hud-panel room-info">
-          <span class="label">ODA:</span>
+          <span class="label">MEYDAN:</span>
           <span class="value" id="hud-room-code">----</span>
-          <span class="label gap">TUR:</span>
+          <span class="label gap">HAMLE:</span>
           <span class="value" id="hud-turn-count">1</span>
         </div>
         
         <div class="turn-announcer" id="turn-banner">
-          <span class="turn-text" id="turn-text-span">BAŞLATILIYOR...</span>
+          <span class="turn-text" id="turn-text-span">DÜELLO BAŞLIYOR...</span>
         </div>
 
-        <div class="hud-panel team-info" style="display: flex; align-items: center; gap: 10px;">
-          <div>
-            <span class="label">KOMUTAN:</span>
+        <div class="hud-panel team-info">
+          <div class="commander-badge">
+            <span class="label">SANCAK:</span>
             <span class="value" id="hud-team-color">MAVİ</span>
           </div>
-          <button id="guide-open-btn-game" class="cyber-btn cyber-btn-accent" style="padding: 0.3rem 0.8rem; font-size: 0.7rem; border-color: rgba(255, 183, 0, 0.4);">
-            <span class="btn-text">REHBER</span>
-          </button>
+          <div class="top-bar-buttons">
+            <button id="guide-open-btn-game" class="medieval-btn medieval-btn-accent top-icon-btn" title="Kılavuz">
+              <span class="btn-text">📜 <span class="hide-mobile-text">KILAVUZ</span></span>
+            </button>
+            <button id="log-mobile-toggle-btn" class="medieval-btn top-icon-btn mobile-only-btn" title="Savaş Kaydı">
+              <span class="btn-text">📖</span>
+            </button>
+            <button id="cam-reset-btn" class="medieval-btn top-icon-btn" title="Arenayı Ortala">
+              <span class="btn-text">🎯</span>
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- Left Panel (Selected Unit Diagnostic) -->
       <div class="hud-left-panel hud-panel hidden" id="unit-diagnostic">
-        <div class="panel-header">BİRLİK BİLGİSİ</div>
+        <div class="panel-header">
+          <span class="panel-header-title">⚔️ BİRLİK NİTELİKLERİ</span>
+          <button id="diag-close-btn" class="diag-close-btn" title="Kapat" aria-label="Kapat">&times;</button>
+        </div>
         <div class="diagnostic-content">
-          <h3 id="diag-name" class="neon-text-blue">UNIT_NAME</h3>
-          <div class="stat-row">
-            <span class="stat-label">TÜR</span>
-            <span class="stat-value" id="diag-type">Piyade</span>
+          <div class="diag-main-row">
+            <h3 id="diag-name" class="gold-text-title">UNIT_NAME</h3>
+            <span class="stat-value badge-team" id="diag-team">Mavi</span>
           </div>
           <div class="stat-row">
-            <span class="stat-label">TAKIM</span>
-            <span class="stat-value" id="diag-team">Mavi</span>
+            <span class="stat-label">SINIF</span>
+            <span class="stat-value" id="diag-type">Piyade</span>
           </div>
           <div class="health-bar-container">
             <div class="health-label">
-              <span>CAN</span>
+              <span>CAN GÜCÜ</span>
               <span id="diag-hp-text">100/100</span>
             </div>
             <div class="health-bar-track">
@@ -189,37 +216,43 @@
               <span class="box-val" id="diag-mov">3</span>
             </div>
             <div class="stat-box glow-ap">
-              <span class="box-label">EP</span>
+              <span class="box-label">EFOR</span>
               <span class="box-val" id="diag-ap">2/2</span>
             </div>
           </div>
         </div>
         <div class="diagnostic-instructions">
-          <p id="diag-instructions-text">Eylem gerçekleştirmek için vurgulanmış bir kareye tıklayın.</p>
+          <p id="diag-instructions-text">Hamle yapmak veya saldırmak için taş döşeli kareye dokunun.</p>
         </div>
       </div>
 
       <!-- Right Panel (Tactical Log) -->
       <div class="hud-right-panel hud-panel" id="combat-log-panel">
         <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <span>SAVAŞ GÜNLÜĞÜ</span>
+          <span>📜 ARENA VAKAYİNAME (KAYITLAR)</span>
           <button id="log-toggle-btn" class="log-toggle-btn" title="Kapat/Aç">▶</button>
         </div>
         <div class="log-messages" id="combat-log">
-          <div class="log-entry system-msg">Taktik bağlantı kuruldu. Savaş alanına hoş geldiniz.</div>
+          <div class="log-entry system-msg">Ortaçağ arenasına hoş geldiniz. Borazanlar çalıyor!</div>
         </div>
       </div>
 
       <!-- Bottom Bar (Actions & Instructions) -->
       <div class="hud-bottom-bar">
         <div class="instructions-panel hud-panel">
-          <span class="shortcut">SOL TIK</span> Birlik Seç / Hedef Kare &nbsp;|&nbsp;
-          <span class="shortcut">SAĞ SÜRÜKLE</span> Kamerayı Döndür &nbsp;|&nbsp;
-          <span class="shortcut">FARE TEKERLEĞİ</span> Yakınlaştır
+          <span class="desktop-hint">
+            <span class="shortcut">SOL TIK</span> Birlik Seç / Hedef &nbsp;|&nbsp;
+            <span class="shortcut">SAĞ SÜRÜKLE</span> Arenayı Döndür &nbsp;|&nbsp;
+            <span class="shortcut">TEKERLEK</span> Yakınlaştır
+          </span>
+          <span class="mobile-hint">
+            <span class="shortcut">DOKUN</span> Seç &nbsp;|&nbsp;
+            <span class="shortcut">SÜRÜKLE</span> Döndür &nbsp;|&nbsp;
+            <span class="shortcut">KISTIR</span> Yakınlaştır
+          </span>
         </div>
-        <button id="end-turn-btn" class="cyber-btn cyber-btn-accent" disabled>
-          <span class="btn-text">TURU ATLA</span>
-          <span class="btn-glitch"></span>
+        <button id="end-turn-btn" class="medieval-btn medieval-btn-accent" disabled>
+          <span class="btn-text">HAMLEYİ DEVRET (TURU ATLA)</span>
         </button>
       </div>
 
@@ -228,12 +261,12 @@
 
   <!-- GAME OVER OVERLAY -->
   <div id="game-over-screen" class="screen">
-    <div class="lobby-card text-center">
-      <h1 class="glitch-title" id="game-over-title" data-text="ZAFER">ZAFER</h1>
-      <p class="desc" id="game-over-desc">Tüm düşman kuvvetleri etkisiz hale getirildi.</p>
-      <button id="return-lobby-btn" class="cyber-btn cyber-btn-primary mt-4">
-        <span class="btn-text">LOBİYE DÖN</span>
-        <span class="btn-glitch"></span>
+    <div class="lobby-card medieval-frame text-center">
+      <div class="crest-icon">👑 🏆 👑</div>
+      <h1 class="medieval-title" id="game-over-title">ZAFER</h1>
+      <p class="desc" id="game-over-desc">Tüm düşman birlikleri dize getirildi. Meydan sizin!</p>
+      <button id="return-lobby-btn" class="medieval-btn medieval-btn-primary mt-4">
+        <span class="btn-text">🏰 KALE MEYDANINA DÖN</span>
       </button>
     </div>
   </div>
@@ -241,14 +274,14 @@
   <!-- ERROR POPUP TOAST -->
   <div id="error-toast" class="error-toast">
     <span class="error-icon">!</span>
-    <span id="error-toast-text" class="error-message">Bir hata oluştu.</span>
+    <span id="error-toast-text" class="error-message">Bir sorun oluştu.</span>
   </div>
 
   <!-- GUIDE MODAL -->
   <div id="guide-modal" class="guide-modal-overlay hidden">
-    <div class="guide-modal-card">
+    <div class="guide-modal-card medieval-frame">
       <div class="guide-modal-header">
-        <h2 class="neon-text-blue">KOMUTAN REHBERİ &amp; BİRLİK KILAVUZU</h2>
+        <h2 class="gold-text-title">📜 BİRLİK KİTABI &amp; SAVAŞ KILAVUZU</h2>
         <button id="guide-close-btn" class="guide-close-btn">&times;</button>
       </div>
       <div class="guide-modal-body">
@@ -257,9 +290,9 @@
           <div class="guide-card">
             <div class="guide-card-header">
               <span class="unit-icon">🛡️</span>
-              <h4>Piyade (Infantry)</h4>
+              <h4>Piyade (Man-at-Arms)</h4>
             </div>
-            <p>Temel yakın dövüş askeri. Ön safları tutmak ve düşman ilerleyişini yavaşlatmak için idealdir.</p>
+            <p>Zincir zırhlı ve kalkanlı sadık yakın dövüş askeri. Ön safları tutmak ve düşman ilerleyişini kırmak için idealdir.</p>
             <div class="guide-stats">
               <span><b>CAN:</b> 85-90</span>
               <span><b>SAL:</b> 20-22</span>
@@ -271,9 +304,9 @@
           <div class="guide-card">
             <div class="guide-card-header">
               <span class="unit-icon">🏹</span>
-              <h4>Okçu (Archer)</h4>
+              <h4>Okçu (Longbowman)</h4>
             </div>
-            <p>Uzun menzilli atıcı. Ön saftaki koruyucuların arkasından güvenle düşmanı yıpratır.</p>
+            <p>Porsuk ağacından uzun yaylı usta atıcı. Ön saftaki kalkanların arkasından düşmanı yıpratır.</p>
             <div class="guide-stats">
               <span><b>CAN:</b> 60</span>
               <span><b>SAL:</b> 18</span>
@@ -285,9 +318,9 @@
           <div class="guide-card">
             <div class="guide-card-header">
               <span class="unit-icon">🏇</span>
-              <h4>Süvari (Cavalry)</h4>
+              <h4>Süvari (Knight on Warhorse)</h4>
             </div>
-            <p>Son derece hızlı atlı birlik. Geniş manevra kabiliyeti ile düşman arkasına sızabilir.</p>
+            <p>Zırhlı savaş atına binen hızlı hücum birliği. Yüksek manevra kabiliyeti ile düşman kanatlarını yarar.</p>
             <div class="guide-stats">
               <span><b>CAN:</b> 80</span>
               <span><b>SAL:</b> 25</span>
@@ -299,9 +332,9 @@
           <div class="guide-card">
             <div class="guide-card-header">
               <span class="unit-icon">🧱</span>
-              <h4>Ağır Muhafız (HeavyGuard)</h4>
+              <h4>Ağır Muhafız (Tower Guardian)</h4>
             </div>
-            <p>Devasa kalkanlı ve zırhlı tank birimi. Çok yavaş hareket etse de öldürülmesi son derece zorur.</p>
+            <p>Devasa demir kule kalkanlı ve çekiçli kale muhafızı. Yavaş hareket eder ancak öldürülmesi son derece güçtür.</p>
             <div class="guide-stats">
               <span><b>CAN:</b> 130</span>
               <span><b>SAL:</b> 35</span>
@@ -313,9 +346,9 @@
           <div class="guide-card">
             <div class="guide-card-header">
               <span class="unit-icon">⚔️</span>
-              <h4>Şövalye (Knight)</h4>
+              <h4>Şövalye (Champion Knight)</h4>
             </div>
-            <p>Elit çift el kılıç ustası. Yakın mesafede çok yüksek yıkım gücüne sahip zırhlı savaşçı.</p>
+            <p>Çift el büyük kılıç ustası asil şövalye. Yakın mesafede çok yüksek yıkım ve zırh delme gücüne sahiptir.</p>
             <div class="guide-stats">
               <span><b>CAN:</b> 90</span>
               <span><b>SAL:</b> 40</span>
@@ -327,9 +360,9 @@
           <div class="guide-card">
             <div class="guide-card-header">
               <span class="unit-icon">☄️</span>
-              <h4>Mancınık (Catapult)</h4>
+              <h4>Mancınık (Siege Onager)</h4>
             </div>
-            <p>Devasa kuşatma silahı. Aşırı hasar ve menzile sahiptir, ancak yavaş hareket eder ve yakından savunmasızdır.</p>
+            <p>Ağır ahşap kuşatma makinesi. Devasa taş gülleler fırlatır, aşırı hasar ve menzile sahiptir.</p>
             <div class="guide-stats">
               <span><b>CAN:</b> 45</span>
               <span><b>SAL:</b> 55</span>
@@ -341,9 +374,9 @@
           <div class="guide-card">
             <div class="guide-card-header">
               <span class="unit-icon">👑</span>
-              <h4>Kaptan (Captain)</h4>
+              <h4>Kaptan / Lord (Noble Commander)</h4>
             </div>
-            <p>Orta menzilli lider birim. 2 kare menzilli kılıç savuruşlarıyla hem dengeli hem de taktikseldir.</p>
+            <p>Kraliyet sancağını taşıyan lider şövalye. 2 kare menzilli kılıç savuruşlarıyla hem dengeli hem stratejiktir.</p>
             <div class="guide-stats">
               <span><b>CAN:</b> 105</span>
               <span><b>SAL:</b> 30</span>
@@ -355,9 +388,9 @@
           <div class="guide-card">
             <div class="guide-card-header">
               <span class="unit-icon">🔮</span>
-              <h4>Büyücü (Mage)</h4>
+              <h4>Büyücü (Court Archmage)</h4>
             </div>
-            <p>Mistik güçlere sahip menzilli yıkıcı. Yüksek büyü hasarı ile zırhlı hedefleri eritebilir.</p>
+            <p>Rünik asasıyla alev ve şimşek yağdıran saray büyücüsü. Ağır zırhlı hedefleri büyü hasarıyla eritir.</p>
             <div class="guide-stats">
               <span><b>CAN:</b> 50</span>
               <span><b>SAL:</b> 42</span>
